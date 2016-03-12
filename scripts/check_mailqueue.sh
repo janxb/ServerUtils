@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SETTINGS ##############
-MAX_QUEUE_SIZE=0
+MAX_QUEUE_SIZE=1
 MAIL_TO="root"
 HOSTNAME=$(/bin/hostname)
 # END SETTINGS ##########
