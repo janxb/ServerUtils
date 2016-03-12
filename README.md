@@ -20,7 +20,7 @@ Every backup after the first one is incremental.
 Obnam uses deduplication and you can delete any backup generation without manipulating the others. For more information see obnam.org.
 
 |Tool|Usage|
-|-|-|
+|---|---|
 |biggest_files|returns a list of the biggest files in a given directory|
 |dirsize|returns the size of a given directory|
 |fail2ban|unblock an ip from a fail2ban jail|
