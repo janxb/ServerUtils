@@ -1,0 +1,16 @@
+#!/bin/bash
+
+################################################
+# Script by <management@codeportal.net>        #
+#                                              #
+# Script for closing foreign tty-sessions      #
+################################################
+
+pkill -9 -t pts/$1
+if [ $? -eq 0 ]; then
+	echo "TTY-Session " pts/$1 " closed"
+else
+	echo "Session not found (Hint: Search with <who>)"
+	exit 1
+fi
+exit 0

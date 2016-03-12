@@ -1,0 +1,4 @@
+#!/bin/bash
+netstat -tlp
+
+exit 0

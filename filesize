@@ -1,0 +1,16 @@
+#!/bin/bash
+
+################################################
+# Script by <management@codeportal.net>        #
+#                                              #
+# Script for calculating the size of a folder  #
+################################################
+
+
+if [ -f $1 ]; then
+	echo "Size of $1: "$(a=(`du -h $1`);echo ${a[0]})
+else
+	echo "File not found.."
+	exit 1
+fi
+exit 0

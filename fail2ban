@@ -1,0 +1,13 @@
+#!/bin/bash
+
+case "$1" in
+	"unblock")
+		echo "Unblocking IP $3 from Jail $2"
+    		fail2ban-client set $2 unbanip $3
+    		;;
+	*)
+		echo "Available Commands: unblock JAIL IPADDRESS"
+   		;;
+esac
+
+exit 0

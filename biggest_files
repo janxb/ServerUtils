@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#################################################
+# Script by <management@codeportal.net>         #
+#                                               #
+# Script for printing the top ten biggest files #
+#################################################
+
+
+if [ -d $1 ]; then
+	du -hsx $1/* | sort -rh | head -10
+else
+	echo "Directory not found.."
+	exit 1
+fi
+exit 0
