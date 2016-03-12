@@ -30,6 +30,8 @@ PACKAGES_OUTPUT=$LOCAL_EXPORT_FOLDER"/aptclone"
 ##########################################################
 
 function trap_error_exit {
+	clean_export_folder
+	clean_repo_lock
 	unmount_data
 	unmount_storage
 	log_error_info "Script exited with Error!"
@@ -158,6 +160,11 @@ function clean_export_folder {
 	fi;
 }
 
+function clean_repo_lock {
+	exec_command "$OBNAM force-lock"
+	log_info "Backup cleaned, Repository unlocked"
+}
+
 function exec_command {
 	set +e
 	$@
@@ -193,8 +200,7 @@ case $COMMAND in
 		log_info "Cleaning up Backup.."
 		clean_export_folder
 		mount_storage
-		exec_command "$OBNAM force-lock"
-		log_info "Backup cleaned, Repository unlocked"
+		clean_repo_lock
 		unmount_storage
                 ;;
 	"help")
