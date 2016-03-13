@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eu
 
 COMMAND=$1
 DIR=$(dirname "$(readlink -f "$0")")
@@ -8,11 +8,25 @@ MIN_EXPORT_FOLDER_LENGTH=1
 # include settings
 source $DIR/backup.conf
 
+FOLDERS_TO_BACKUP="$FOLDERS_TO_BACKUP $LOCAL_EXPORT_FOLDER"
+
+FOLDERS_TO_BACKUP_FORMATTED=""
+for folder in $FOLDERS_TO_BACKUP
+do
+    FOLDERS_TO_BACKUP_FORMATTED="$FOLDERS_TO_BACKUP_FORMATTED --root=$folder"
+done
+
+FOLDERS_TO_EXCLUDE_FORMATTED=""
+for folder in $FOLDERS_TO_EXCLUDE
+do
+    FOLDERS_TO_EXCLUDE_FORMATTED="$FOLDERS_TO_EXCLUDE_FORMATTED --exclude=$folder"
+done
+
 BINARY=$(/usr/bin/which obnam)
 OBNAM="$BINARY\
  --repository=$LOCAL_STORAGE_MOUNT/$OBNAM_REPO_NAME\
  --client-name=backup\
- --keep=30d\
+ --keep=$BACKUP_KEEP_TIME\
  --no-leave-checkpoints\
  --one-file-system\
  --exclude-caches\
@@ -20,8 +34,8 @@ OBNAM="$BINARY\
  --lock-timeout=10\
  --lru-size=100mb\
  --upload-queue-size=50mb\
- --root=$FOLDERS_TO_BACKUP,$LOCAL_EXPORT_FOLDER\
- --exclude=$FOLDERS_TO_EXCLUDE\
+ $FOLDERS_TO_BACKUP_FORMATTED\
+ $FOLDERS_TO_EXCLUDE_FORMATTED\
 "
 
 MYSQL_OUTPUT=$LOCAL_EXPORT_FOLDER"/mysql"

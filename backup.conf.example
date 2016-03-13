@@ -7,12 +7,15 @@ OBNAM_REPO_NAME="obnam"
 
 LOCAL_EXPORT_FOLDER="/backup"
 
+BACKUP_KEEP_TIME="30d"
+
 FOLDERS_TO_BACKUP="\
-/etc\
-,/usr/local/bin\
+/folder/one
+/folder/two
+/another/folder
 "
 
 FOLDERS_TO_EXCLUDE="\
-/tmp/1\
-,/tmp/2\
+/folder/to/exclude
+/another/excluded/folder
 "
