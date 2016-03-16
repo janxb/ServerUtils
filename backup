@@ -194,39 +194,45 @@ function exec_command {
 }
 
 case $COMMAND in
-        "create")
-                backup_mysql
+	"info")
+		mount_storage
+		exec_command $OBNAM generations
+		df -h $LOCAL_STORAGE_MOUNT
+		unmount_storage
+		;;
+	"create")
+		backup_mysql
 		backup_packages
-                mount_storage
-                backup_run
+		mount_storage
+		backup_run
 		clean_export_folder
 		unmount_storage
-                ;;
-        "mount")
-                mount_storage
-                mount_data
-                ;;
-        "unmount")
+		;;
+	"mount")
+		mount_storage
+		mount_data
+		;;
+	"unmount")
 		unmount_data
 		unmount_storage
-                ;;
-        "cleanup")
+		;;
+	"cleanup")
 		log_info "Cleaning up Backup.."
 		clean_export_folder
 		mount_storage
 		clean_repo_lock
 		unmount_storage
-                ;;
+		;;
 	"help")
 		echo "Backup Script. Usage: [ create | mount | unmount | cleanup | commands ]"
-                ;;
+		;;
 	"commands")
 		$BINARY help
-                ;;
-        *)
+		;;
+	*)
 		mount_storage
 		log_info "Running Command: $@"
-                exec_command $OBNAM $@
+		exec_command $OBNAM $@
 		unmount_storage
-                ;;
+		;;
 esac
