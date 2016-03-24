@@ -7,7 +7,7 @@ HOSTNAME=$(/bin/hostname)
 # END SETTINGS ##########
 
 CURRENT_QUEUE_SIZE=$(/usr/sbin/exim -bpc);
-EXIM_QUEUE_SUMMARY=$(/usr/sbin/exiqgrep -z -i | xargs -i /usr/sbin/exim -Mvl {});
+EXIM_QUEUE_SUMMARY=$(/usr/sbin/exiqgrep -i | xargs -i /usr/sbin/exim -Mvl {});
 REMOVE_HINT="To remove frozen messages, use the following command: exiqgrep -z -i | xargs exim -Mrm"
 LINE_BREAK=$'\n\n'
 
