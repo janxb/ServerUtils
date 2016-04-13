@@ -1,4 +1,5 @@
 REMOTE_STORAGE_PATH="00.00.00.00:/vol-00000-1"
+REMOTE_STORAGE_TYPE="nfs"
 LOCAL_STORAGE_MOUNT="/mnt/storage"
 LOCAL_BACKUP_MOUNT="/mnt/backup"
 MYSQL_USER="debian-sys-maint"

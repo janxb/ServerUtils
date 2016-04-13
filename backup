@@ -45,7 +45,6 @@ PACKAGES_OUTPUT=$LOCAL_EXPORT_FOLDER"/aptclone"
 
 function trap_error_exit {
 	clean_export_folder
-	clean_repo_lock
 	unmount_data
 	unmount_storage
 	log_error_info "Script exited with Error!"
@@ -141,7 +140,7 @@ function mount_storage {
                 log_error "Local Storage Mount $LOCAL_STORAGE_MOUNT is not empty!"
         else
                 mkdir -p $LOCAL_STORAGE_MOUNT
-                mount $REMOTE_STORAGE_PATH $LOCAL_STORAGE_MOUNT #-o nolock #> /dev/null 2>&1
+                mount $REMOTE_STORAGE_PATH $LOCAL_STORAGE_MOUNT -t $REMOTE_STORAGE_TYPE
                 (mountpoint -q $LOCAL_STORAGE_MOUNT && log_info "Storage mounted to $LOCAL_STORAGE_MOUNT") \
 			|| log_error "Could not mount Storage to $LOCAL_STORAGE_MOUNT"
         fi
