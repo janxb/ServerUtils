@@ -14,7 +14,8 @@ The tool needs the following binaries to be installed:
 * apt-clone (for package backup)
 * mysql (obviously..)
 * dpkg-repack (for package backup)
-* nfs-common (for mounting remote storage)
+* nfs-common (for mounting remote storage as nfs [default])
+* glusterfs-client (for mounting remote storage as glusterfs)
 
 Every backup after the first one is incremental.
 Obnam uses deduplication and you can delete any backup generation without manipulating the others. For more information see obnam.org.
