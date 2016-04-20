@@ -8,7 +8,7 @@ MIN_EXPORT_FOLDER_LENGTH=1
 # include settings
 source $DIR/backup.conf
 
-if [ -z "$LOCAL_EXPORT_FOLDER" ] ; then
+if [ ! -z "$LOCAL_EXPORT_FOLDER" ] ; then
 	FOLDERS_TO_BACKUP="$FOLDERS_TO_BACKUP $LOCAL_EXPORT_FOLDER"
 fi;
 
