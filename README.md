@@ -20,6 +20,24 @@ The tool needs the following binaries to be installed:
 Every backup after the first one is incremental.
 Obnam uses deduplication and you can delete any backup generation without manipulating the others. For more information see obnam.org.
 
+### sample backup.conf storage configurations
+```
+# mount via NFS
+REMOTE_STORAGE_PATH="00.00.00.00:/vol-00000-1"
+REMOTE_STORAGE_TYPE="nfs"
+REMOTE_STORAGE_OPTIONS=""
+
+# mount via GlusterFS
+REMOTE_STORAGE_PATH="00.00.00.00:/vol-00000-1"
+REMOTE_STORAGE_TYPE="glusterfs"
+REMOTE_STORAGE_OPTIONS=""
+
+# mount via Samba
+REMOTE_STORAGE_PATH="//00.00.00.00/vol-00000-1"
+REMOTE_STORAGE_TYPE="cifs"
+REMOTE_STORAGE_OPTIONS="-o username=xxx -o password=xxx"
+```
+
 |Tool|Usage|
 |---|---|
 |biggest_files|returns a list of the biggest files in a given directory|

@@ -8,7 +8,9 @@ MIN_EXPORT_FOLDER_LENGTH=1
 # include settings
 source $DIR/backup.conf
 
-FOLDERS_TO_BACKUP="$FOLDERS_TO_BACKUP $LOCAL_EXPORT_FOLDER"
+if [ -z "$LOCAL_EXPORT_FOLDER" ] ; then
+	FOLDERS_TO_BACKUP="$FOLDERS_TO_BACKUP $LOCAL_EXPORT_FOLDER"
+fi;
 
 FOLDERS_TO_BACKUP_FORMATTED=""
 for folder in $FOLDERS_TO_BACKUP
@@ -84,6 +86,9 @@ if [[ -z "${BINARY// }" ]]; then
 fi
 
 function backup_mysql {
+	if [ ! "$ENABLE_MYSQL_BACKUP" = true ] ; then
+		return;
+	fi;
 	log_info "Creating MySQL backup"
         rm $MYSQL_OUTPUT/* &> /dev/null || true
         rmdir $MYSQL_OUTPUT &> /dev/null || true
@@ -96,6 +101,9 @@ function backup_mysql {
 }
 
 function backup_packages {
+	if [ ! "$ENABLE_PACKAGES_BACKUP" = true ] ; then
+		return;
+	fi;
 	README_CONTENT="To restore the Packages, execute \"apt-clone restore FILENAME\""
 	log_info "Creating Packages backup"
         rm $PACKAGES_OUTPUT/* &> /dev/null || true
@@ -140,7 +148,7 @@ function mount_storage {
                 log_error "Local Storage Mount $LOCAL_STORAGE_MOUNT is not empty!"
         else
                 mkdir -p $LOCAL_STORAGE_MOUNT
-                mount $REMOTE_STORAGE_PATH $LOCAL_STORAGE_MOUNT -t $REMOTE_STORAGE_TYPE
+                mount $REMOTE_STORAGE_PATH $LOCAL_STORAGE_MOUNT -t $REMOTE_STORAGE_TYPE $REMOTE_STORAGE_OPTIONS
                 (mountpoint -q $LOCAL_STORAGE_MOUNT && log_info "Storage mounted to $LOCAL_STORAGE_MOUNT") \
 			|| log_error "Could not mount Storage to $LOCAL_STORAGE_MOUNT"
         fi
