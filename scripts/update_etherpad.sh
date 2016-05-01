@@ -1,6 +1,6 @@
 #!/bin/bash
 
 cd /home/etherpad/etherpad-lite/ &&
-git pull &&
+svn update &&
 chown etherpad:etherpad . -R &&
 supervisorctl restart etherpad-etherpad-server
