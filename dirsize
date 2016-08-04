@@ -8,7 +8,7 @@
 
 
 if [ -d $1 ]; then
-	echo "Size of $1: "$(a=(`du --summarize -h $1`);echo ${a[0]})
+	echo "Size of $1: "$(a=(`du --summarize -h $1 2>/dev/null`);echo ${a[0]})
 else
 	echo "Directory not found.."
 	exit 1
