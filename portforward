@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+case "$1" in
+	add)
+		iptables -A PREROUTING -t nat -i vmbr0 -p tcp --dport $2 -j DNAT --to 192.168.100.$3:$4
+		;;
+        del)
+		iptables -D PREROUTING -t nat -i vmbr0 -p tcp --dport $2 -j DNAT --to 192.168.100.$3:$4
+		;;
+	list)
+		iptables -t nat --line-numbers -L PREROUTING
+		;;
+	*)
+		echo "Usage: add/del SOURCEPORT DESTVMID DESTPORT"
+esac
