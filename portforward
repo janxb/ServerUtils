@@ -1,16 +1,16 @@
 #!/bin/bash
-
+IFACE=ens3
 
 case "$1" in
 	add)
-		iptables -A PREROUTING -t nat -i vmbr0 -p tcp --dport $2 -j DNAT --to 192.168.100.$3:$4
+		iptables -A PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to $3:$4
 		;;
         del)
-		iptables -D PREROUTING -t nat -i vmbr0 -p tcp --dport $2 -j DNAT --to 192.168.100.$3:$4
+		iptables -D PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to $3:$4
 		;;
 	delall)
 		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do 
-			iptables -t nat -D PREROUTING $i; 
+			iptables -t nat -D PREROUTING $i;
 		done
 		;;
 	list)

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+ARGNUM=2
+
+if [ $# -lt $ARGNUM ]; then
+  echo 1>&2 "$0: not enough arguments"
+  exit 2
+elif [ $# -gt $ARGNUM ]; then
+  echo 1>&2 "$0: too many arguments"
+  exit 2
+fi
+
+lxc image delete $2 2>/dev/null
+lxc publish $1 --force --alias $2
