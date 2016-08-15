@@ -1,12 +1,19 @@
 #!/bin/bash
 set -eu
 
+if [ $# -lt 1 ]; then
+	echo "ERROR: Not enough arguments given!"
+	exit 1
+fi;
+
 COMMAND=$1
 DIR=$(dirname "$(readlink -f "$0")")
 MIN_EXPORT_FOLDER_LENGTH=1
 
+SETTINGS_PATH=$DIR/backup.conf
+
 # include settings
-source $DIR/backup.conf
+source $SETTINGS_PATH
 
 if [ ! -z "$LOCAL_EXPORT_FOLDER" ] ; then
 	FOLDERS_TO_BACKUP="$FOLDERS_TO_BACKUP $LOCAL_EXPORT_FOLDER"
@@ -176,7 +183,7 @@ function clean_export_folder {
 		rmdir $PACKAGES_OUTPUT &> /dev/null || true
 		rmdir $LOCAL_EXPORT_FOLDER &> /dev/null || true
 		log_info "Local Export Folder cleaned"
-	else 
+	else
 		log_error "Cant clean Export Folder, is it root!?"
 	fi;
 }
@@ -184,6 +191,16 @@ function clean_export_folder {
 function clean_repo_lock {
 	exec_command "$OBNAM force-lock"
 	log_info "Backup cleaned, Repository unlocked"
+}
+
+function clean_repo_chunks {
+	exec_command "$OBNAM fsck --fsck-fix --fsck-skip-generations"
+	log_info "Backup cleaned, Repository unlocked"
+}
+
+
+function backup_config {
+	cp -p $SETTINGS_PATH $LOCAL_STORAGE_MOUNT/backup.conf
 }
 
 function exec_command {
@@ -195,7 +212,6 @@ function exec_command {
 	if [ "$return_code" -gt "0" ]; then
     		log_error "Error while running Command: "$COMMAND
 	else
-		#log_info "Finished Command: "$COMMAND
 		PLACEHOLDER=1
 	fi
 }
@@ -208,9 +224,10 @@ case $COMMAND in
 		unmount_storage
 		;;
 	"create")
+		mount_storage
+		backup_config
 		backup_mysql
 		backup_packages
-		mount_storage
 		backup_run
 		clean_export_folder
 		unmount_storage
