@@ -10,7 +10,16 @@ elif [ $# -gt $ARGNUM ]; then
   exit 2
 fi
 
-lxc image delete $2 2>/dev/null
+echo "-- publishing container $1"
+echo "  deleting old image"
+lxc image delete $2
+echo "  stopping container"
 lxc stop $1
+echo "  publishing image"
 lxc publish $1 --alias $2
+echo "  starting container"
 lxc start $1
+
+echo "  exporting image"
+lxc image export $2 /data/export/$2.tgz
+echo "  done."
