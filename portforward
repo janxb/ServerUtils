@@ -1,20 +1,34 @@
 #!/bin/bash
-IFACE=ens3
+IFACE="ens3"
+IPV4="10.0.0."
+IPV6="fd11::"
+
+iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
+iptables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
+
+ip6tables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
+ip6tables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
 
 case "$1" in
 	add)
-		iptables -A PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to $3:$4
+		iptables -A PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to $IPV4$3:$4
+		ip6tables -A PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to [$IPV6$3]:$4
 		;;
         del)
-		iptables -D PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to $3:$4
+		iptables -D PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to $IPV4$3:$4
+		ip6tables -D PREROUTING -t nat -i $IFACE -p tcp --dport $2 -j DNAT --to [$IPV6$3]:$4
 		;;
 	delall)
 		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do 
 			iptables -t nat -D PREROUTING $i;
 		done
+		for i in $( ip6tables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do 
+			ip6tables -t nat -D PREROUTING $i;
+		done
 		;;
 	list)
 		iptables -t nat --line-numbers -L PREROUTING
+		ip6tables -t nat --line-numbers -L PREROUTING
 		;;
 	*)
 		echo "Usage: add/del SOURCEPORT DESTVMID DESTPORT"

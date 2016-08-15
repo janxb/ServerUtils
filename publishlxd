@@ -11,4 +11,6 @@ elif [ $# -gt $ARGNUM ]; then
 fi
 
 lxc image delete $2 2>/dev/null
-lxc publish $1 --force --alias $2
+lxc stop $1
+lxc publish $1 --alias $2
+lxc start $1
