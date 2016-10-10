@@ -12,9 +12,9 @@ fi
 
 echo "-- publishing container $1"
 echo "  deleting old image"
-lxc image delete $2
+lxc image delete $2 2>/dev/null
 echo "  stopping container"
-lxc stop $1
+lxc stop $1 2>/dev/null
 echo "  publishing image"
 lxc publish $1 --alias $2
 echo "  starting container"
