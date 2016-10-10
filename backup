@@ -190,12 +190,12 @@ function clean_export_folder {
 
 function clean_repo_lock {
 	exec_command "$OBNAM force-lock"
-	log_info "Backup cleaned, Repository unlocked"
+	log_info "Unlocked Repository"
 }
 
 function clean_repo_chunks {
 	exec_command "$OBNAM fsck --fsck-fix --fsck-skip-generations"
-	log_info "Backup cleaned, Repository unlocked"
+	log_info "Cleaned unused Chunks"
 }
 
 
