@@ -10,16 +10,28 @@ elif [ $# -gt $ARGNUM ]; then
   exit 2
 fi
 
-echo "-- publishing container $1"
-echo "  deleting old image"
-lxc image delete $2 2>/dev/null
-echo "  stopping container"
-lxc stop $1 2>/dev/null
-echo "  publishing image"
-lxc publish $1 --alias $2
-echo "  starting container"
-lxc start $1
+if lxc info $1 | egrep -iqc "status: running"; then
+  AUTORESTART=true
+else
+  AUTORESTART=false
+fi
 
-echo "  exporting image"
-lxc image export $2 /data/lxd-templates/$2
+CONTAINER=$1
+EXPORTPATH=$2
+TEMPLATE=$(date +%s | sha256sum | base64 | head -c32 ; echo)
+
+echo "-- publishing container $1"
+echo "  (1/5) stopping container"
+lxc stop $CONTAINER 2>/dev/null
+echo "  (2/5) creating image"
+lxc publish $CONTAINER --alias $TEMPLATE >/dev/null
+echo "  (3/5) initialising container"
+if [ "$AUTORESTART" = true ] ; then
+  lxc start $CONTAINER
+fi
+echo "  (4/5) exporting image"
+lxc image export $TEMPLATE $EXPORTPATH >/dev/null
+echo "  (5/5) removing local image"
+lxc image delete $TEMPLATE 2>/dev/null
+
 echo "  done."
