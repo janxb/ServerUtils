@@ -2,11 +2,8 @@
 
 ARGNUM=2
 
-if [ $# -lt $ARGNUM ]; then
-  echo 1>&2 "$0: not enough arguments"
-  exit 2
-elif [ $# -gt $ARGNUM ]; then
-  echo 1>&2 "$0: too many arguments"
+if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
+  echo 1>&2 "$0: {containerName} {exportPath without .tar.gz}"
   exit 2
 fi
 
