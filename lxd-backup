@@ -10,18 +10,19 @@ function do_import {
 
 	IMPORTPATH=$1
 	CONTAINER=$2
+	TEMPLATE="$CONTAINER-backup"
 
 	echo "-- importing template $IMPORTPATH as container $CONTAINER"
 
 	echo "   importing image file"
-	lxc image delete "$CONTAINER-import" 2>/dev/null || true
-	lxc image import $IMPORTPATH --alias="$CONTAINER-import" >/dev/null 2>&1
+	lxc image delete $TEMPLATE 2>/dev/null || true
+	lxc image import $IMPORTPATH --alias=$TEMPLATE >/dev/null 2>&1
 
 	echo "   creating container"
-	lxc init "$CONTAINER-import" $CONTAINER >/dev/null || true
+	lxc init $TEMPLATE $CONTAINER >/dev/null || true
 
 	echo "   cleaning up"
-	lxc image delete "$CONTAINER-import" 2> /dev/null
+	lxc image delete $TEMPLATE 2> /dev/null
 
 	echo "   done."
 
@@ -42,9 +43,9 @@ function do_export {
 
 	CONTAINER=$1
 	EXPORTPATH=$2
-	TEMPLATE=$(date +%s | sha256sum | base64 | head -c32 ; echo)
+	TEMPLATE="$CONTAINER-backup"
 
-	echo "-- exporting container $1 to $2.tar.gz"
+	echo "-- exporting container $CONTAINER to $EXPORTPATH.tar.gz"
 
 	if [ "$ISRUNNING" = true ] ; then
 	  echo "   stopping container"
