@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+_lxc="/usr/bin/lxc"
+_awk="/usr/bin/awk"
+
+# Get containers list
+clist="$(${_lxc} list -c ns | ${_awk} '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+
+for c in $clist
+do
+ echo ""
+ echo "$c"
+ echo "---------------------------------------------------------"
+ ${_lxc} exec $c -- "$@"
+done 
