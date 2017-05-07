@@ -12,19 +12,19 @@ function do_import {
 	CONTAINER=$2
 	TEMPLATE="$CONTAINER-backup"
 
-	echo "-- importing template $IMPORTPATH as container $CONTAINER"
+	echo "-- $(date) - importing template $IMPORTPATH as container $CONTAINER"
 
-	echo "   importing image file"
+	echo "   $(date) - importing image file"
 	lxc image delete $TEMPLATE 2>/dev/null || true
 	lxc image import $IMPORTPATH --alias=$TEMPLATE >/dev/null 2>&1
 
-	echo "   creating container"
+	echo "   $(date) - creating container"
 	lxc init $TEMPLATE $CONTAINER >/dev/null || true
 
-	echo "   cleaning up"
+	echo "   $(date) - cleaning up"
 	lxc image delete $TEMPLATE 2> /dev/null
 
-	echo "   done."
+	echo "   $(date) - done."
 
 }
 
@@ -45,36 +45,36 @@ function do_export {
 	EXPORTPATH=$2
 	TEMPLATE="$CONTAINER-backup"
 
-	echo "-- exporting container $CONTAINER to $EXPORTPATH.tar.gz"
+	echo "-- $(date) - exporting container $CONTAINER to $EXPORTPATH.tar.gz"
 
 	if [ "$ISRUNNING" = true ] ; then
-	  echo "   stopping container"
+	  echo "   $(date) - stopping container"
 	  lxc stop $CONTAINER 2>/dev/null
 	fi
 
-	echo "   preparing snapshot"
+	echo "   $(date) - preparing snapshot"
 	lxc delete $CONTAINER/$TEMPLATE 2>/dev/null || true
 	lxc image delete $TEMPLATE 2>/dev/null || true
 
-	echo "   creating snapshot"
+	echo "   $(date) - creating snapshot"
 	lxc snapshot $CONTAINER $TEMPLATE >/dev/null
 
 	if [ "$ISRUNNING" = true ] ; then
-	  echo "   starting container"
+	  echo "   $(date) - starting container"
 	  lxc start $CONTAINER
 	fi
 
-	echo "   creating image"
+	echo "   $(date) - creating image"
 	lxc publish $CONTAINER/$TEMPLATE --alias $TEMPLATE >/dev/null
 
-	echo "   exporting image"
+	echo "   $(date) - exporting image"
 	lxc image export $TEMPLATE $EXPORTPATH >/dev/null
 
-	echo "   cleaning up"
+	echo "   $(date) - cleaning up"
 	lxc delete $CONTAINER/$TEMPLATE
 	lxc image delete $TEMPLATE
 
-	echo "   done."
+	echo "   $(date) - done."
 }
 
 case $1 in
