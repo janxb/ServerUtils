@@ -52,8 +52,11 @@ function do_export {
 	  lxc stop $CONTAINER 2>/dev/null
 	fi
 
-	echo "   creating snapshot"
+	echo "   preparing snapshot"
 	lxc delete $CONTAINER/$TEMPLATE 2>/dev/null || true
+	lxc image delete $TEMPLATE 2>/dev/null || true
+
+	echo "   creating snapshot"
 	lxc snapshot $CONTAINER $TEMPLATE >/dev/null
 
 	if [ "$ISRUNNING" = true ] ; then
@@ -69,7 +72,7 @@ function do_export {
 
 	echo "   cleaning up"
 	lxc delete $CONTAINER/$TEMPLATE
-	lxc image delete $TEMPLATE 2>/dev/null
+	lxc image delete $TEMPLATE
 
 	echo "   done."
 }
