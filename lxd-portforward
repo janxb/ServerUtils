@@ -5,9 +5,9 @@ EXTERNAL_PORT=$2
 CONTAINER_NAME=$3
 CONTAINER_PORT=$4
 
-IFACE="ens3"
-IPV4=$(dig @127.100.1.1 +short a    $CONTAINER_NAME)
-IPV6=[$(dig @127.100.1.1 +short aaaa $CONTAINER_NAME)]
+IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
+IPV4=$(dig +short a    $CONTAINER_NAME)
+IPV6=[$(dig +short aaaa $CONTAINER_NAME)]
 
 iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
 iptables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
