@@ -9,9 +9,13 @@ IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
 IPV4=$(dig +short a    $CONTAINER_NAME)
 IPV6=[$(dig +short aaaa $CONTAINER_NAME)]
 
+iptables -t nat -D POSTROUTING -o $IFACE -j MASQUERADE
+iptables -t nat -D POSTROUTING -o lxcbr0 -j MASQUERADE
 iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
 iptables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
 
+ip6tables -t nat -D POSTROUTING -o $IFACE -j MASQUERADE
+ip6tables -t nat -D POSTROUTING -o lxcbr0 -j MASQUERADE
 ip6tables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
 ip6tables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
 
