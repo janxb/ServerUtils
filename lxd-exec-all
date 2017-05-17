@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
 
-_lxc="/usr/bin/lxc"
-_awk="/usr/bin/awk"
-
 # Get containers list
-clist="$(${_lxc} list -c ns | ${_awk} '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+clist="$(lxc list -c ns | awk '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+
+for i in "$@"
+do
+case $i in
+    -e=*|--exclude=*)
+    EXCLUDE_LIST="${i#*=}"
+    shift
+    ;;
+    -h|--help)
+        echo -e= / --exclude= : exclude comma-separated container names
+        exit 0
+    ;;
+esac
+done
 
 for c in $clist
 do
  echo ""
  echo "$c"
  echo "---------------------------------------------------------"
- ${_lxc} exec $c -- "$@"
-done 
+ if [[ $EXCLUDE_LIST =~ (^|,)"$c"(,|$) ]]
+  then
+   echo "EXCLUDED"
+   continue
+  else
+   lxc exec $c -- "$@"
+ fi
+done

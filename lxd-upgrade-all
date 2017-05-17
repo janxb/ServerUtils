@@ -8,8 +8,8 @@ _awk="/usr/bin/awk"
 for i in "$@"
 do
 case $i in
-    -d=*|--dummy=*)
-    DUMMY="${i#*=}"
+    -e=*|--exclude=*)
+    EXCLUDE_LIST="${i#*=}"
     shift
     ;;
     -y)
@@ -22,8 +22,9 @@ case $i in
     ;;
     *)
 	echo LXD container upgrade script.
-	echo -y : always pass yes to upgrade command
-	echo -s : self / update host system
+	echo -y     : always pass yes to upgrade command
+	echo -e=### : exclude comma-separated container names
+	echo -s     : self / update host system
 	exit 0
     ;;
 esac
@@ -32,19 +33,22 @@ done
 if [ "$HOST" = true ] ; then
  echo ""
  echo "Upgrading host system..."
- apt -qq update
+ apt -qq update &>/dev/null
  apt -qq $YES full-upgrade
  apt -qq $YES autoremove
 fi
 
-# Get containers list
-clist="$(${_lxc} list -c ns | ${_awk} '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+echo
+echo
+echo fetching package data..
+lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES update &>/dev/null
 
-for c in $clist
-do
- echo ""
- echo "Upgrading container \"$c\"..."
- ${_lxc} exec $c ${_apt} -- -qq update
- ${_lxc} exec $c ${_apt} -- -qq $YES full-upgrade
- ${_lxc} exec $c ${_apt} -- -qq $YES autoremove
-done 
+echo
+echo
+echo upgrading containers..
+lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES full-upgrade
+
+echo
+echo
+echo cleaning containers..
+lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES autoremove
