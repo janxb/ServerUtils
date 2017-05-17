@@ -1,3 +1,0 @@
-#!/bin/bash
-
-exiqgrep -z -i | xargs exim -Mrm
