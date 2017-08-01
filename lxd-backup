@@ -45,6 +45,9 @@ function do_export {
 	EXPORTPATH=$2
 	TEMPLATE="$CONTAINER-backup"
 
+	touch $EXPORTPATH.tmp
+	rm $EXPORTPATH.tmp
+
 	echo "-- $(date) - exporting container $CONTAINER to $EXPORTPATH.tar.gz"
 
 	if [ "$ISRUNNING" = true ] ; then
