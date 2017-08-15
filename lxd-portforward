@@ -10,7 +10,6 @@ LXD_IFACE="lxdbr0"
 LXD_IPADDR=$(ip -f inet -o addr show $LXD_IFACE|cut -d\  -f 7 | cut -d/ -f 1)
 
 if [ -n "${CONTAINER_NAME}" ]; then
-	HOSTNAME=$(hostname -s)
 	IPV4=$(dig +short a $CONTAINER_NAME @$LXD_IPADDR)
 	IPV6=[$(dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR)]
 fi
