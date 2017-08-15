@@ -6,18 +6,13 @@ CONTAINER_NAME=$3
 CONTAINER_PORT=$4
 
 EXT_IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
-
-# Ubuntu 16.04
-LXD_IPADDR=$(ifconfig -a | grep 0.0.0.0 | awk -F: '{print $2}' | awk '{print $1}' | head -n1)
-# Ubuntu 17.04
-if [ -z "${LXD_IPADDR}" ]; then LXD_IPADDR=$(ifconfig -a | grep 0.0.0.0 | awk '{print $1}' | head -n1); fi
-
-LXD_IFACE=$(ip addr show | grep $LXD_IPADDR | cut -f2 | awk '{ print $5 }' | head -n1)
+LXD_IFACE="lxdbr0"
+LXD_IPADDR=$(ip -f inet -o addr show $LXD_IFACE|cut -d\  -f 7 | cut -d/ -f 1)
 
 if [ -n "${CONTAINER_NAME}" ]; then
 	HOSTNAME=$(hostname -s)
-	IPV4=$(dig +short a $CONTAINER_NAME @$HOSTNAME)
-	IPV6=[$(dig +short aaaa $CONTAINER_NAME @$HOSTNAME)]
+	IPV4=$(dig +short a $CONTAINER_NAME @$LXD_IPADDR)
+	IPV6=[$(dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR)]
 fi
 
 iptables -t nat -D POSTROUTING -o $EXT_IFACE -j MASQUERADE
