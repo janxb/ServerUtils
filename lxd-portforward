@@ -6,7 +6,12 @@ CONTAINER_NAME=$3
 CONTAINER_PORT=$4
 
 EXT_IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
-LXD_IPADDR=$(ifconfig -a | grep 0.0.0.0 | awk '{print $2}' | head -n1)
+
+# Ubuntu 16.04
+LXD_IPADDR=$(ifconfig -a | grep 0.0.0.0 | awk -F: '{print $2}' | awk '{print $1}' | head -n1)
+# Ubuntu 17.04
+if [ -z "${LXD_IPADDR}" ]; then LXD_IPADDR=$(ifconfig -a | grep 0.0.0.0 | awk '{print $1}' | head -n1); fi
+
 LXD_IFACE=$(ip addr show | grep $LXD_IPADDR | cut -f2 | awk '{ print $5 }' | head -n1)
 
 if [ -n "${CONTAINER_NAME}" ]; then
