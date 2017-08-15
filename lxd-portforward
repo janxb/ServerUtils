@@ -5,28 +5,34 @@ EXTERNAL_PORT=$2
 CONTAINER_NAME=$3
 CONTAINER_PORT=$4
 
-IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
-IPV4=$(dig +short a    $CONTAINER_NAME)
-IPV6=[$(dig +short aaaa $CONTAINER_NAME)]
+EXT_IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
+LXD_IPADDR=$(ifconfig -a | grep 0.0.0.0 | awk '{print $2}' | head -n1)
+LXD_IFACE=$(ip addr show | grep $LXD_IPADDR | cut -f2 | awk '{ print $5 }' | head -n1)
 
-iptables -t nat -D POSTROUTING -o $IFACE -j MASQUERADE
-iptables -t nat -D POSTROUTING -o lxcbr0 -j MASQUERADE
-iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
-iptables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
+if [ -n "${CONTAINER_NAME}" ]; then
+	HOSTNAME=$(hostname -s)
+	IPV4=$(dig +short a $CONTAINER_NAME @$HOSTNAME)
+	IPV6=[$(dig +short aaaa $CONTAINER_NAME @$HOSTNAME)]
+fi
 
-ip6tables -t nat -D POSTROUTING -o $IFACE -j MASQUERADE
-ip6tables -t nat -D POSTROUTING -o lxcbr0 -j MASQUERADE
-ip6tables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
-ip6tables -t nat -A POSTROUTING -o lxcbr0 -j MASQUERADE
+iptables -t nat -D POSTROUTING -o $EXT_IFACE -j MASQUERADE
+iptables -t nat -D POSTROUTING -o $LXD_IFACE -j MASQUERADE
+iptables -t nat -A POSTROUTING -o $EXT_IFACE -j MASQUERADE
+iptables -t nat -A POSTROUTING -o $LXD_IFACE -j MASQUERADE
+
+ip6tables -t nat -D POSTROUTING -o $EXT_IFACE -j MASQUERADE
+ip6tables -t nat -D POSTROUTING -o $LXD_IFACE -j MASQUERADE
+ip6tables -t nat -A POSTROUTING -o $EXT_IFACE -j MASQUERADE
+ip6tables -t nat -A POSTROUTING -o $LXD_IFACE -j MASQUERADE
 
 case "$COMMAND" in
 	add)
-		iptables -A PREROUTING -t nat -i $IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
-		ip6tables -A PREROUTING -t nat -i $IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
+		iptables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
+		ip6tables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
 		;;
         del)
-		iptables -D PREROUTING -t nat -i $IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
-		ip6tables -D PREROUTING -t nat -i $IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
+		iptables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
+		ip6tables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
 		;;
 	delall)
 		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do 
