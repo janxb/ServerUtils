@@ -14,16 +14,6 @@ if [ -n "${CONTAINER_NAME}" ]; then
 	IPV6=[$(dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR)]
 fi
 
-iptables -t nat -D POSTROUTING -o $EXT_IFACE -j MASQUERADE
-iptables -t nat -D POSTROUTING -o $LXD_IFACE -j MASQUERADE
-iptables -t nat -A POSTROUTING -o $EXT_IFACE -j MASQUERADE
-iptables -t nat -A POSTROUTING -o $LXD_IFACE -j MASQUERADE
-
-ip6tables -t nat -D POSTROUTING -o $EXT_IFACE -j MASQUERADE
-ip6tables -t nat -D POSTROUTING -o $LXD_IFACE -j MASQUERADE
-ip6tables -t nat -A POSTROUTING -o $EXT_IFACE -j MASQUERADE
-ip6tables -t nat -A POSTROUTING -o $LXD_IFACE -j MASQUERADE
-
 case "$COMMAND" in
 	add)
 		iptables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
@@ -34,10 +24,10 @@ case "$COMMAND" in
 		ip6tables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
 		;;
 	delall)
-		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do 
+		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do
 			iptables -t nat -D PREROUTING $i;
 		done
-		for i in $( ip6tables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do 
+		for i in $( ip6tables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do
 			ip6tables -t nat -D PREROUTING $i;
 		done
 		;;
