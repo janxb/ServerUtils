@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+for i in "$@"
+do
+case $i in
+    -y)
+    YES=-y
+    shift
+    ;;
+    *)
+	echo System package upgrade script
+	echo -y     : always pass yes to upgrade/cleanup command
+	exit 0
+    ;;
+esac
+done
+
+
 apt update
-apt full-upgrade
-apt autoremove
+apt full-upgrade $YES
+apt autoremove $YES
