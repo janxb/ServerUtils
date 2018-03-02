@@ -1,0 +1,3 @@
+#!/bin/bash
+
+btrfs-size /var/lib/lxd/storage-pools/default/
