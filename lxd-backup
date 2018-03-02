@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+function log {
+	echo "$(date '+%Y-%m-%d %H:%M:%S') | $1"
+}
+
 function do_import {
 	ARGNUM=2
 	if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
@@ -10,21 +14,21 @@ function do_import {
 
 	IMPORTPATH=$1
 	CONTAINER=$2
-	TEMPLATE="$CONTAINER-backup"
+	IMAGE="$CONTAINER-import"
 
-	echo "-- $(date) - importing template $IMPORTPATH as container $CONTAINER"
+	log "importing template $IMPORTPATH as container $CONTAINER"
 
-	echo "   $(date) - importing image file"
-	lxc image delete $TEMPLATE 2>/dev/null || true
-	lxc image import $IMPORTPATH --alias=$TEMPLATE >/dev/null 2>&1
+	log "importing image file"
+	lxc image delete $IMAGE 2>/dev/null || true
+	lxc image import $IMPORTPATH --alias=$IMAGE >/dev/null 2>&1
 
-	echo "   $(date) - creating container"
-	lxc init $TEMPLATE $CONTAINER >/dev/null || true
+	log "creating container"
+	lxc init $IMAGE $CONTAINER >/dev/null || true
 
-	echo "   $(date) - cleaning up"
-	lxc image delete $TEMPLATE 2> /dev/null
+	log "cleaning up"
+	lxc image delete $IMAGE 2> /dev/null
 
-	echo "   $(date) - done."
+	log "done."
 
 }
 
@@ -43,41 +47,42 @@ function do_export {
 
 	CONTAINER=$1
 	EXPORTPATH=$2
-	TEMPLATE="$CONTAINER-backup"
+	IMAGE="$CONTAINER-export"
+	SNAPSHOT="export"
 
 	touch $EXPORTPATH.tmp
 	rm $EXPORTPATH.tmp
 
-	echo "-- $(date) - exporting container $CONTAINER to $EXPORTPATH.tar.gz"
+	log "exporting container $CONTAINER to $EXPORTPATH.tar.gz"
 
 	if [ "$ISRUNNING" = true ] ; then
-	  echo "   $(date) - stopping container"
+	  log "stopping container"
 	  lxc stop $CONTAINER 2>/dev/null
 	fi
 
-	echo "   $(date) - preparing snapshot"
-	lxc delete $CONTAINER/$TEMPLATE 2>/dev/null || true
-	lxc image delete $TEMPLATE 2>/dev/null || true
+	log "preparing snapshot"
+	lxc delete $CONTAINER/$SNAPSHOT 2>/dev/null || true
+	lxc image delete $IMAGE 2>/dev/null || true
 
-	echo "   $(date) - creating snapshot"
-	lxc snapshot $CONTAINER $TEMPLATE >/dev/null
+	log "creating snapshot"
+	lxc snapshot $CONTAINER $SNAPSHOT >/dev/null
 
 	if [ "$ISRUNNING" = true ] ; then
-	  echo "   $(date) - starting container"
+	  log "starting container"
 	  lxc start $CONTAINER
 	fi
 
-	echo "   $(date) - creating image"
-	lxc publish $CONTAINER/$TEMPLATE --alias $TEMPLATE >/dev/null
+	log "creating image"
+	lxc publish $CONTAINER/$SNAPSHOT --alias $IMAGE description="Exported from $CONTAINER at $(date '+%Y-%m-%d %H:%M')" >/dev/null
 
-	echo "   $(date) - exporting image"
-	lxc image export $TEMPLATE $EXPORTPATH >/dev/null
+	log "exporting image"
+	lxc image export $IMAGE $EXPORTPATH >/dev/null
 
-	echo "   $(date) - cleaning up"
-	lxc delete $CONTAINER/$TEMPLATE
-	lxc image delete $TEMPLATE
+	log "cleaning up"
+	lxc delete $CONTAINER/$SNAPSHOT
+	lxc image delete $IMAGE
 
-	echo "   $(date) - done."
+	log "done."
 }
 
 case $1 in
