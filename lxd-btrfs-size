@@ -1,3 +1,5 @@
 #!/bin/bash
 
-btrfs-size /var/lib/lxd/storage-pools/default/
+STORAGE=/var/lib/lxd/storage-pools/default/
+btrfs quota enable $STORAGE
+btrfs-size $STORAGE
