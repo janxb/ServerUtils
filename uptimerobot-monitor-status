@@ -1,5 +1,4 @@
 #!/usr/bin/env php
-
 <?php
 
 function api($apiKey, String $endpoint, $postData = [])
@@ -40,11 +39,11 @@ $statusResume = array_key_exists('resume', $options);
 
 $apiKey = $options['key'];
 
-if ($statusPause xor $statusResume) {
+if (!empty($apiKey)) {
     foreach (api($apiKey, 'getMonitors')->monitors as $monitor) {
         echo $monitor->friendly_name . ' / ' . $monitor->id . "\n";
-        api($apiKey, 'editMonitor', ['id' => $monitor->id, 'status' => $statusPause ? 0 : 1]);
+        if ($statusPause xor $statusResume) {
+            api($apiKey, 'editMonitor', ['id' => $monitor->id, 'status' => $statusPause ? 0 : 1]);
+        }
     }
-} else {
-    die("Wrong Parameters! --pause / --resume / --key\n");
 }
