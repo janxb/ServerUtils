@@ -1,5 +1,7 @@
 #!/bin/bash
 
-STORAGE=/var/lib/lxd/storage-pools/default/
-btrfs quota enable $STORAGE
-btrfs-size $STORAGE
+if [ -z "$1" ]; then STORAGE=default; else STORAGE="$1"; fi
+
+IMAGEPATH=/var/lib/lxd/storage-pools/$STORAGE/
+btrfs quota enable $IMAGEPATH
+btrfs-size $IMAGEPATH
