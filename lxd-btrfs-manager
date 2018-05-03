@@ -10,6 +10,7 @@ if [ -z "$ARG_FILESYSTEM" ]; then STORAGE=default; else STORAGE="$2"; fi
 btrfs filesystem show $STORAGE >/dev/null
 
 LOOPFILE_PATH=$(btrfs filesystem show $STORAGE | awk 'FNR == 3 {print $8}')
+IMAGEFILE_PATH=$(losetup | grep $LOOPFILE_PATH | awk 'FNR == 1 {print $6}')
 BTRFS_UUID=$(btrfs filesystem show $STORAGE | awk 'FNR == 1 {print $4}')
 TEMP_MOUNT_PATH=/tmp/btrfs_$BTRFS_UUID
 
@@ -26,6 +27,7 @@ case "$ARG_COMMAND" in
 		$ARG_SELF mount $ARG_FILESYSTEM
 		btrfs-size $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
+		filesize $IMAGEFILE_PATH
 	;;
 	fstrim)
 		$ARG_SELF mount $ARG_FILESYSTEM
