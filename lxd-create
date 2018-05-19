@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+if [ "$#" -ne 2 ]; then
+    echo "Illegal number of parameters"
+    exit 1
+fi
+
+lxc launch $1 $2
+sleep 5
+
+echo Updating package lists
+lxc exec $2 -- apt-get update >/dev/null
+
+echo Installing GIT
+lxc exec $2 -- apt-get install git -y >/dev/null
+
+echo Fetching ServerUtils
+lxc exec $2 -- git clone https://github.com/janxb/serverutils /usr/local/sbin >/dev/null
+
+echo Upgrading packages
+lxc exec $2 -- do-package-upgrades -y &>/dev/null
+
+echo Container created: $2
