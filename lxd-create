@@ -7,7 +7,7 @@ if [ "$#" -ne 2 ]; then
 fi
 
 lxc launch $1 $2
-sleep 5
+sleep 10
 
 echo Updating package lists
 lxc exec $2 -- apt-get update >/dev/null
