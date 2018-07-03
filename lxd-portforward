@@ -20,10 +20,14 @@ case "$COMMAND" in
 	add)
 		iptables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
 		ip6tables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
+		iptables -A PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
+		ip6tables -A PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
 		;;
         del)
 		iptables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
 		ip6tables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
+		iptables -D PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
+		ip6tables -D PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
 		;;
 	delall)
 		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do
