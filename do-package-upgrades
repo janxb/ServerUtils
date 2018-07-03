@@ -19,3 +19,4 @@ done
 apt update
 apt full-upgrade $YES
 apt autoremove $YES
+snap refresh
