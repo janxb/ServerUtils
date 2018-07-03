@@ -39,5 +39,5 @@ case "$ARG_COMMAND" in
 		fstrim / -v
 	;;
 	*)
-		echo "Commands: <mount | unmount | size | fstrim> [btrfs_pool_name]"
+		echo "Commands: <mount | unmount | size | fstrim | fstrim-full> [btrfs_pool_name]"
 esac
