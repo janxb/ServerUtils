@@ -34,6 +34,10 @@ case "$ARG_COMMAND" in
 		fstrim -v $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
 	;;
+	fstrim-full)
+		$ARG_SELF fstrim $ARG_FILESYSTEM
+		fstrim / -v
+	;;
 	*)
 		echo "Commands: <mount | unmount | size | fstrim> [btrfs_pool_name]"
 esac
