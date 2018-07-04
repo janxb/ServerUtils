@@ -28,6 +28,7 @@ case "$ARG_COMMAND" in
 		btrfs-size $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
 		filesize $IMAGEFILE_PATH
+		btrfs filesystem show $ARG_FILESYSTEM
 	;;
 	fstrim)
 		$ARG_SELF mount $ARG_FILESYSTEM
