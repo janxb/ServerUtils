@@ -83,6 +83,7 @@ for (( i = 0 ; i < ${#ID__[@]} ; i++ )); do
 done
 
 EXCL_TOTAL=0
+USED_TOTAL=0
 
 formatMask="%-80s %10s %10s  %-10s\n"
 separatorLine="────────────────────────────────────────────────────────────────────────────────────────────────────────────\n"
@@ -95,9 +96,11 @@ printf "$separatorLine"
 for (( i = 0 ; i < ${#ID__[@]} ; i++ )); do
   printf "$formatMask" ${NAME[${ID__[$i]}]} "${TOT[${ID__[$i]}]}" "${EXC[${ID__[$i]}]}" ${ID__[$i]}
   EXCL_TOTAL=$(( EXCL_TOTAL + ${EXC_[$i]} ))
+  USED_TOTAL=$(( USED_TOTAL + ${TOT_[$i]} ))
 done
 
 EXCL_TOTAL=$( bytesToHumanIEC "$EXCL_TOTAL" )
+USED_TOTAL=$( bytesToHumanIEC "$USED_TOTAL" )
 
 printf "$separatorLine"
-printf "%s %86s\n" "Total exclusive data" "$EXCL_TOTAL"
+printf "%s %90s\n" "" "$USED_TOTAL"
