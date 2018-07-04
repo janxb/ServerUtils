@@ -23,7 +23,7 @@ case "$ARG_COMMAND" in
 		umount $TEMP_MOUNT_PATH
 		rmdir $TEMP_MOUNT_PATH
 	;;
-	size)
+	info)
 		$ARG_SELF mount $ARG_FILESYSTEM
 		btrfs-size $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
@@ -35,10 +35,10 @@ case "$ARG_COMMAND" in
 		fstrim -v $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
 	;;
-	fstrim-full)
+	clean)
 		$ARG_SELF fstrim $ARG_FILESYSTEM
 		fstrim / -v
 	;;
 	*)
-		echo "Commands: <mount | unmount | size | fstrim | fstrim-full> [btrfs_pool_name]"
+		echo "Commands: <mount | unmount | info | fstrim | clean> [btrfs_pool_name]"
 esac
