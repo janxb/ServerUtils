@@ -55,14 +55,14 @@ function do_export {
 
 	log "exporting container $CONTAINER to $EXPORTPATH.tar.gz"
 
+	log "preparing snapshot"
+	lxc delete $CONTAINER/$SNAPSHOT 2>/dev/null || true
+	lxc image delete $IMAGE 2>/dev/null || true
+
 	if [ "$ISRUNNING" = true ] ; then
 	  log "stopping container"
 	  lxc stop $CONTAINER 2>/dev/null
 	fi
-
-	log "preparing snapshot"
-	lxc delete $CONTAINER/$SNAPSHOT 2>/dev/null || true
-	lxc image delete $IMAGE 2>/dev/null || true
 
 	log "creating snapshot"
 	lxc snapshot $CONTAINER $SNAPSHOT >/dev/null
