@@ -47,7 +47,7 @@ $monitorId = isset($options['monitor']) ? $options['monitor'] : null;
 if (!empty($apiKey)) {
     foreach (api($apiKey, 'getMonitors')->monitors as $monitor) {
         if ($statusPause xor $statusResume) {
-	    if (empty($monitorId) || $monitor->id == $monitorId || $monitor->friendly_name == $monitorId){
+	    if (empty($monitorId) || $monitor->id == $monitorId || strtolower($monitor->friendly_name) == strtolower($monitorId)){
                 api($apiKey, 'editMonitor', ['id' => $monitor->id, 'status' => $statusPause ? 0 : 1]);
                 $stateString = $statusPause ? 'Paused' : 'Resumed';
                 echo $stateString .' monitor: ' . getMonitorDescription($monitor) ."\n";
