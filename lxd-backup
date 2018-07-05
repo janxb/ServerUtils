@@ -14,7 +14,8 @@ function do_import {
 
 	IMPORTPATH=$1
 	CONTAINER=$2
-	IMAGE="$CONTAINER-import"
+	HASH=$(echo $CONTAINER | shasum | cut -b 1-40)
+	IMAGE="$HASH-import"
 
 	log "importing template $IMPORTPATH as container $CONTAINER"
 
@@ -47,8 +48,9 @@ function do_export {
 
 	CONTAINER=$1
 	EXPORTPATH=$2
-	IMAGE="$CONTAINER-export"
-	SNAPSHOT="export"
+	HASH=$(echo $CONTAINER | shasum | cut -b 1-40)
+	IMAGE="$HASH-export"
+	SNAPSHOT="$HASH-export"
 
 	touch $EXPORTPATH.tmp
 	rm $EXPORTPATH.tmp
