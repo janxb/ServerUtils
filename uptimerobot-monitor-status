@@ -33,17 +33,37 @@ function api($apiKey, String $endpoint, $postData = [])
     return null;
 }
 
-$options = getopt(null, ['pause', 'resume', 'key:']);
+function getMonitorDescription($monitor){
+    return $monitor->friendly_name . ' / ' . $monitor->id;
+}
+
+$options = getopt(null, ['pause', 'resume', 'key:', 'monitor:']);
 $statusPause = array_key_exists('pause', $options);
 $statusResume = array_key_exists('resume', $options);
 
-$apiKey = $options['key'];
+$apiKey = isset($options['key']) ? $options['key'] : null;
+$monitorId = isset($options['monitor']) ? $options['monitor'] : null;
 
 if (!empty($apiKey)) {
     foreach (api($apiKey, 'getMonitors')->monitors as $monitor) {
-        echo $monitor->friendly_name . ' / ' . $monitor->id . "\n";
         if ($statusPause xor $statusResume) {
-            api($apiKey, 'editMonitor', ['id' => $monitor->id, 'status' => $statusPause ? 0 : 1]);
+	    if (empty($monitorId) || $monitor->id == $monitorId || $monitor->friendly_name == $monitorId){
+                api($apiKey, 'editMonitor', ['id' => $monitor->id, 'status' => $statusPause ? 0 : 1]);
+                $stateString = $statusPause ? 'Paused' : 'Resumed';
+                echo $stateString .' monitor: ' . getMonitorDescription($monitor) ."\n";
+            }
+        } else {
+            echo getMonitorDescription($monitor) . "\n";
         }
     }
+} else {
+echo <<<EOL
+    Description: Uptimerobot monitor status script. List, pause and resume all or specifiv uptimerobot monitors.
+    Parameters:
+               --key=      API key of your uptimerobot account
+               --pause     Pause matching monitors
+               --resume    Resume matching monitors
+               --monitor=  ID or name of the selected monitor. If not provided, all monitors are changed
+
+EOL;
 }
