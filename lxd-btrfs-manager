@@ -34,11 +34,8 @@ case "$ARG_COMMAND" in
 		$ARG_SELF mount $ARG_FILESYSTEM
 		fstrim -v $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
-	;;
-	clean)
-		$ARG_SELF fstrim $ARG_FILESYSTEM
-		fstrim / -v
+		fstrim -v $(dirname $IMAGEFILE_PATH)
 	;;
 	*)
-		echo "Commands: <mount | unmount | info | fstrim | clean> [btrfs_pool_name]"
+		echo "Commands: <mount | unmount | info | fstrim > [btrfs_pool_name]"
 esac
