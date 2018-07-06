@@ -23,9 +23,9 @@ case "$ARG_COMMAND" in
 		umount $TEMP_MOUNT_PATH
 		rmdir $TEMP_MOUNT_PATH
 	;;
-	info)
+	list)
 		$ARG_SELF mount $ARG_FILESYSTEM
-		btrfs-size $TEMP_MOUNT_PATH
+		btrfs subvolume list -t --sort=path $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
 		filesize $IMAGEFILE_PATH
 		btrfs filesystem show $ARG_FILESYSTEM
@@ -37,5 +37,5 @@ case "$ARG_COMMAND" in
 		fstrim -v $(dirname $IMAGEFILE_PATH)
 	;;
 	*)
-		echo "Commands: <mount | unmount | info | fstrim > [btrfs_pool_name]"
+		echo "Commands: <mount | unmount | list | fstrim > [btrfs_pool_name]"
 esac
