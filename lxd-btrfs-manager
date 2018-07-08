@@ -37,5 +37,5 @@ case "$ARG_COMMAND" in
 		fstrim -v $(dirname $IMAGEFILE_PATH)
 	;;
 	*)
-		echo "Commands: <mount | unmount | list | fstrim > [btrfs_pool_name]"
+		echo "Commands: <mount | unmount | list | fstrim> [btrfs_pool_name]"
 esac
