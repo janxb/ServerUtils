@@ -1,0 +1,40 @@
+#!/bin/bash
+set -eu
+
+if [ "$#" -lt 2 ] || [ "$#" -gt 3 ]; then
+	echo "Usage: <BACKUP_PATH> <NUM_KEEP_BACKUPS> [UPTIMEROBOT_API_KEY]"
+	exit 1
+fi
+
+UR_API_KEY=${3:-""}
+NUM_KEEP_BACKUPS=$2
+BACKUP_PATH=${1%/}
+
+if [ ${#BACKUP_PATH} -lt 5 ]; then
+	echo "Error: please provide a backup path minimum 5 characters long"
+	exit 1
+fi
+
+function u {
+	if [ ! -z "$UR_API_KEY" ]; then
+		uptimerobot-monitor-status --key=$UR_API_KEY --$1 --monitor="$2"
+	fi
+}
+
+function c {
+	EXPORT_PATH=$BACKUP_PATH/$1
+	u pause $1
+
+	savelog -n -l -c 100 $EXPORT_PATH.tar.gz >/dev/null
+	for i in $(seq $(expr $NUM_KEEP_BACKUPS - 1) 100); do rm $EXPORT_PATH.tar.gz.$i &>/dev/null || true; done
+	lxd-backup export $1 $EXPORT_PATH
+	
+	u resume $1
+}
+
+container_list="$(lxc list -c ns | awk '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+echo Backing up all running LXD containers to $BACKUP_PATH
+
+for container in $container_list; do
+	c $container
+done
