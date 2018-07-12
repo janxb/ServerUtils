@@ -62,7 +62,7 @@ if (!empty($apiKey)) {
     }
 } else {
 echo <<<EOL
-    Description: Uptimerobot monitor status script. List, pause and resume all or specifiv uptimerobot monitors.
+    Description: Uptimerobot monitor status script. List, pause and resume all or specific uptimerobot monitors.
     Parameters:
                --key=      API key of your uptimerobot account
                --pause     Pause matching monitors
