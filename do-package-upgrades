@@ -19,4 +19,4 @@ done
 apt update
 apt full-upgrade $YES
 apt autoremove $YES
-snap refresh
+snap refresh 2>/dev/null || true
