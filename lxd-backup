@@ -87,7 +87,27 @@ function do_export {
 	log "done."
 }
 
+function do_clean {
+	ARGNUM=1
+	if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
+	  echo 1>&2 "$0: {containerName}"
+	  exit 2
+	fi
+
+	CONTAINER=$1
+	EXPORTPATH=$2
+	HASH=$(echo $CONTAINER | shasum | cut -b 1-40)
+	IMAGE="$HASH-export"
+
+	log "Removing auto-created snapshot $IMAGE from container $CONTAINER"
+	lxc delete $CONTAINER/$IMAGE || true
+	log "done."
+}
+
 case $1 in
+        "clean")
+                do_clean $2
+                ;;
         "export")
                 do_export $2 $3
                 ;;
@@ -95,6 +115,6 @@ case $1 in
                 do_import $2 $3
                 ;;
         *)
-                echo "Wrong Parameters! Usage: [ export | import | help ]"
+                echo "Wrong Parameters! Usage: [ export | import | clean | help ]"
                 ;;
 esac
