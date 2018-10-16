@@ -8,7 +8,7 @@ function log {
 function do_import {
 	ARGNUM=2
 	if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
-	  echo 1>&2 "$0: {imagePath} {containerName}"
+	  echo 1>&2 "$0 import {imagePath} {containerName}"
 	  exit 2
 	fi
 
@@ -36,7 +36,7 @@ function do_import {
 function do_export {
 	ARGNUM=2
 	if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
-	  echo 1>&2 "$0: {containerName} {exportPath without .tar.gz}"
+	  echo 1>&2 "$0 export {containerName} {exportPath without .tar.gz}"
 	  exit 2
 	fi
 
@@ -90,7 +90,7 @@ function do_export {
 function do_clean {
 	ARGNUM=1
 	if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
-	  echo 1>&2 "$0: {containerName}"
+	  echo 1>&2 "$0 clean {containerName}"
 	  exit 2
 	fi
 
