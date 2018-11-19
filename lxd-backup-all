@@ -28,7 +28,7 @@ function c {
 	savelog -n -l -c 100 $EXPORT_PATH.tar.gz >/dev/null
 	for i in $(seq $(expr $NUM_KEEP_BACKUPS - 1) 100); do rm $EXPORT_PATH.tar.gz.$i &>/dev/null || true; done
 	lxd-backup export $1 $EXPORT_PATH
-	
+
 	u resume $1
 }
 
