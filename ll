@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ls -lah "$@"
+ls -lah --time-style long-iso "$@"
