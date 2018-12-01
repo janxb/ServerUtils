@@ -29,14 +29,14 @@ case "$ARG_COMMAND" in
 		$ARG_SELF mount $ARG_FILESYSTEM
 		btrfs subvolume list -t --sort=path $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
-		filesize $IMAGEFILE_PATH
+		if [ -n "$IMAGEFILE_PATH" ]; then filesize $IMAGEFILE_PATH; fi
 		btrfs filesystem show $ARG_FILESYSTEM
 	;;
 	fstrim)
 		$ARG_SELF mount $ARG_FILESYSTEM
 		fstrim -v $TEMP_MOUNT_PATH
 		$ARG_SELF unmount $ARG_FILESYSTEM
-		fstrim -v $(dirname $IMAGEFILE_PATH)
+		if [ -n "$IMAGEFILE_PATH" ]; then fstrim -v $(dirname $IMAGEFILE_PATH); fi
 	;;
 	*)
 		echo "Commands: <mount | unmount | list | fstrim> [btrfs_pool_name]"
