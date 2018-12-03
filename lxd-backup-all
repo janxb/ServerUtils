@@ -24,11 +24,9 @@ function u {
 function c {
 	EXPORT_PATH=$BACKUP_PATH/$1
 	u pause $1
-
 	savelog -n -l -c 100 $EXPORT_PATH.tar.gz >/dev/null
 	for i in $(seq $(expr $NUM_KEEP_BACKUPS - 1) 100); do rm $EXPORT_PATH.tar.gz.$i &>/dev/null || true; done
 	lxd-backup export $1 $EXPORT_PATH
-
 	u resume $1
 }
 
@@ -38,3 +36,5 @@ echo Backing up all running LXD containers to $BACKUP_PATH
 for container in $container_list; do
 	c $container
 done
+
+u resume ""
