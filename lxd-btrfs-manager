@@ -47,12 +47,12 @@ case "$COMMAND" in
 	mount)
 		mkdir $TEMP_MOUNT_PATH
 		mount $LOOPFILE_PATH $TEMP_MOUNT_PATH
-		echo "Mounted LXD storage $STORAGE on $TEMP_MOUNT_PATH"
+		echo "Mounted LXD storage $ARG_POOL on $TEMP_MOUNT_PATH"
 	;;
 	unmount)
 		umount $TEMP_MOUNT_PATH
 		rmdir $TEMP_MOUNT_PATH
-		echo "Unmounted LXD storage $STORAGE from $TEMP_MOUNT_PATH"
+		echo "Unmounted LXD storage $ARG_POOL from $TEMP_MOUNT_PATH"
 	;;
 	list)
 		$ARG_SELF mount --pool=$ARG_POOL
