@@ -11,7 +11,7 @@ while [ $# -gt 0 ]; do
     --path=*)
       ARG_PATH="${1#*=}"
       ;;
-    mount|unmount|list|fstrim|defrag)
+    mount|unmount|list|fstrim|defrag|size)
       COMMAND="$1"
       ;;
     *)
@@ -21,6 +21,7 @@ while [ $# -gt 0 ]; do
 		  lxd-btrfs-manager mount [--pool=<name>]
 		  lxd-btrfs-manager unmount [--pool=<name>]
 		  lxd-btrfs-manager list [--pool=<name>]
+		  lxd-btrfs-manager size [--pool=<name>]
 		  lxd-btrfs-manager fstrim [--pool=<name>]
 		  lxd-btrfs-manager defrag [--pool=<name>] [--path=<path>]
 
@@ -60,6 +61,11 @@ case "$COMMAND" in
 		$ARG_SELF unmount --pool=$ARG_POOL
 		if [ -n "$IMAGEFILE_PATH" ]; then filesize $IMAGEFILE_PATH; fi
 		btrfs filesystem show $ARG_POOL
+	;;
+	size)
+		$ARG_SELF mount --pool=$ARG_POOL
+		btrfs filesystem show $ARG_POOL
+		$ARG_SELF unmount --pool=$ARG_POOL
 	;;
 	defrag)
 		$ARG_SELF mount --pool=$ARG_POOL
