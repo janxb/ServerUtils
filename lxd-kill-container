@@ -1,0 +1,16 @@
+#!/bin/bash
+set -eu
+
+CNAME=$1
+
+CPID=$(lxc list -c pns $CNAME | awk 'NR==4{print $2}')
+if [ -z "$CPID" ]; then
+	echo "ERROR: container $CNAME is not running."
+	exit 1;
+fi;
+
+CPARENTPID=$(ps -o ppid= -p $CPID)
+
+kill -KILL $CPARENTPID
+
+echo container $CNAME with PID $CPID and parent PID $CPARENTPID successfully killed!
