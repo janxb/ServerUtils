@@ -64,10 +64,14 @@ monitors_count=$(($(monitors_filter '.monitors | length')-1))
 for monitor_index in $(seq 0 $monitors_count); do
 	monitor_id=$(monitors_filter ".monitors[$monitor_index].id")
 	monitor_name=$(monitors_filter ".monitors[$monitor_index].friendly_name" | recode html..ascii | sed 's/\"//g')
+	if [[ $(monitors_filter ".monitors[$monitor_index].status") -eq 2 ]]
+		then monitor_status="Up  "
+		else monitor_status="Down"
+	fi
 
 	# list monitors
 	if [ -z $arg_action_numeric ]; then
-		echo $monitor_id / $monitor_name
+		echo "$monitor_id / $monitor_status / $monitor_name"
 
 	# pause / resume monitors
 	else
