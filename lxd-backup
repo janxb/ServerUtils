@@ -21,7 +21,7 @@ function do_import {
 
 	log "importing image file"
 	lxc image delete $IMAGE 2>/dev/null || true
-	lxc image import $IMPORTPATH --alias=$IMAGE >/dev/null 2>&1
+	lxc image import $IMPORTPATH --alias=$IMAGE >/dev/null
 
 	log "creating container"
 	lxc init $IMAGE $CONTAINER >/dev/null || true
