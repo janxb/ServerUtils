@@ -30,7 +30,7 @@ Parameters:
   --key=	API key of your uptimerobot account
   --pause	Pause matching monitors
   --resume	Resume matching monitors
-  --monitor=	(Optional) ID or name of the selected monitor.
+  --monitor=	(Optional) ID or name of the selected monitor
 EOF
 exit 1
 ;;
