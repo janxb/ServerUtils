@@ -7,13 +7,15 @@ function log {
 
 function do_import {
 	ARGNUM=2
-	if [ $# -lt $ARGNUM ] || [ $# -gt $ARGNUM ]; then
+	if [ $# -lt $(($ARGNUM-1)) ] || [ $# -gt $ARGNUM ]; then
 	  echo 1>&2 "$0 import {imagePath} {containerName}"
 	  exit 2
 	fi
 
 	IMPORTPATH=$1
-	CONTAINER=$2
+	IMPORTFILE=$(basename -- "$IMPORTPATH")
+	DEFAULTCONTAINER=${IMPORTFILE%%.*}
+	CONTAINER=${2:-$DEFAULTCONTAINER}
 	HASH=$(echo $CONTAINER | shasum | cut -b 1-40)
 	IMAGE="$HASH-import"
 
@@ -47,7 +49,10 @@ function do_export {
 	fi
 
 	CONTAINER=$1
-	EXPORTPATH=$2
+	EXPORTPATH=${2%/}
+	if [[ -d $EXPORTPATH ]]; then
+		EXPORTPATH+="/$CONTAINER"
+	fi
 	HASH=$(echo $CONTAINER | shasum | cut -b 1-40)
 	IMAGE="$HASH-export"
 	SNAPSHOT="$HASH-export"
