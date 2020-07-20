@@ -1,3 +1,4 @@
+
 #!/bin/bash
 set -e
 
@@ -60,10 +61,12 @@ case "$COMMAND" in
 		btrfs subvolume list -t --sort=path $TEMP_MOUNT_PATH
 		$ARG_SELF unmount --pool=$ARG_POOL
 		if [ -n "$IMAGEFILE_PATH" ]; then filesize $IMAGEFILE_PATH; fi
+		lxc storage info default | head -n6 | tail -n2 | sed -e 's/^[[:space:]]*//'
 		btrfs filesystem show $ARG_POOL
 	;;
 	size)
 		$ARG_SELF mount --pool=$ARG_POOL
+		lxc storage info default | head -n6 | tail -n2 | sed -e 's/^[[:space:]]*//'
 		btrfs filesystem show $ARG_POOL
 		$ARG_SELF unmount --pool=$ARG_POOL
 	;;
