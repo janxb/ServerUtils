@@ -7,18 +7,25 @@ if [ "$#" -ne 2 ]; then
 fi
 
 lxc launch $1 $2
+
+echo "Waiting for network"
 sleep 10
 
-echo Updating package lists
-lxc exec $2 -- apt-get update >/dev/null
+echo "Updating package lists"
+lxc exec $2 -- apt-get update &>/dev/null
 
-echo Installing GIT
-lxc exec $2 -- apt-get install git -y >/dev/null
+echo "Installing GIT"
+lxc exec $2 -- apt-get install git -y &>/dev/null
 
-echo Fetching ServerUtils
-lxc exec $2 -- git clone https://github.com/janxb/serverutils /usr/local/sbin >/dev/null
+TOOLS="htop iotop iftop net-tools"
+echo "Installing additional tools ($TOOLS)"
+lxc exec $2 -- apt-get install $TOOLS -y &>/dev/null
 
-echo Upgrading packages
+SU_PATH="/usr/local/sbin"
+echo "Fetching ServerUtils into $SU_PATH"
+lxc exec $2 -- git clone https://github.com/janxb/ServerUtils.git $SU_PATH &>/dev/null
+
+echo "Upgrading packages"
 lxc exec $2 -- do-package-upgrades -y &>/dev/null
 
 echo Container created: $2
