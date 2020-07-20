@@ -81,10 +81,13 @@ case "$COMMAND" in
 		echo "Trimming BTRFS pool $ARG_POOL.."
 		$ARG_SELF mount --pool=$ARG_POOL
 		fstrim -v $TEMP_MOUNT_PATH
+		sync $TEMP_MOUNT_PATH
 		$ARG_SELF unmount --pool=$ARG_POOL
 		if [ -n "$IMAGEFILE_PATH" ]; then
+			echo "Waiting for BTRFS filesystem sync-to-disk.."
+			sleep 10
 			echo "Trimming loop image file.."
-			fstrim -v $(dirname $IMAGEFILE_PATH);
+			fstrim -v $(dirname $IMAGEFILE_PATH)
 		fi
 		echo "Done."
 	;;
