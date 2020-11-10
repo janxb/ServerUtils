@@ -1,4 +1,4 @@
 #!/bin/bash
-netstat -tlp
+netstat -tulpn | grep LISTEN
 
 exit 0
