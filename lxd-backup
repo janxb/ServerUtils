@@ -104,8 +104,12 @@ function do_clean {
 	HASH=$(echo $CONTAINER | shasum | cut -b 1-40)
 	IMAGE="$HASH-export"
 
-	log "Removing auto-created snapshot $IMAGE from container $CONTAINER"
+	log "Cleaning backup data for container $CONTAINER"
+
+	log "Removing container snapshot.."
 	lxc delete $CONTAINER/$IMAGE || true
+	log "Removing image.."
+	lxc image delete $IMAGE || true
 	log "done."
 }
 
