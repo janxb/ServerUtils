@@ -107,9 +107,9 @@ function do_clean {
 	log "Cleaning backup data for container $CONTAINER"
 
 	log "Removing container snapshot.."
-	lxc delete $CONTAINER/$IMAGE || true
+	lxc delete $CONTAINER/$IMAGE 2>/dev/null || true
 	log "Removing image.."
-	lxc image delete $IMAGE || true
+	lxc image delete $IMAGE 2>/dev/null || true
 	log "done."
 }
 
