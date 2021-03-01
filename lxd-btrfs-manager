@@ -59,6 +59,7 @@ case "$COMMAND" in
 	list)
 		$ARG_SELF mount --pool=$ARG_POOL
 		btrfs subvolume list -t --sort=path $TEMP_MOUNT_PATH
+		df -h $TEMP_MOUNT_PATH
 		$ARG_SELF unmount --pool=$ARG_POOL
 		if [ -n "$IMAGEFILE_PATH" ]; then filesize $IMAGEFILE_PATH; fi
 		lxc storage info default | head -n6 | tail -n2 | sed -e 's/^[[:space:]]*//'
