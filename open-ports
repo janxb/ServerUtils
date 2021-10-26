@@ -1,4 +1,4 @@
 #!/bin/bash
-netstat -tlp
+netstat -ntlp
 
 exit 0
