@@ -20,22 +20,37 @@ case $i in
     HOST=true
     shift
     ;;
+    -c)
+    CHECK=true
+    shift
+    ;;
     *)
 	echo LXD container upgrade script.
 	echo -y     : always pass yes to upgrade command
 	echo -e=### : exclude comma-separated container names
 	echo -s     : self / update host system
+	echo -c     : check only / list upgradable packages
 	exit 0
     ;;
 esac
 done
 
 if [ "$HOST" = true ] ; then
- echo ""
- echo "Upgrading host system..."
- apt -qq update &>/dev/null
- apt -qq $YES full-upgrade
- apt -qq $YES autoremove
+ echo
+ echo
+ echo fetching host system package data..
+ if [ "$CHECK" != true ] ; then
+  echo
+  echo
+  echo upgrading host system..
+  apt -qq $YES full-upgrade
+  apt -qq $YES autoremove
+ else
+  echo
+  echo
+  echo checking available host system updates..
+  apt list --upgradable
+ fi
 fi
 
 echo
@@ -43,12 +58,19 @@ echo
 echo fetching package data..
 lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES update &>/dev/null
 
-echo
-echo
-echo upgrading containers..
-lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES full-upgrade
 
-echo
-echo
-echo cleaning containers..
-lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES autoremove
+if [ "$CHECK" != true ] ; then
+ echo
+ echo
+ echo upgrading containers..
+ lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES full-upgrade
+ echo
+ echo
+ echo cleaning containers..
+ lxd-exec-all -e=$EXCLUDE_LIST apt -qq $YES autoremove
+else
+ echo
+ echo
+ echo checking available upgrades..
+ lxd-exec-all -e=$EXCLUDE_LIST apt list --upgradable
+fi

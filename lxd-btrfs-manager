@@ -1,3 +1,4 @@
+
 #!/bin/bash
 set -e
 
@@ -11,7 +12,7 @@ while [ $# -gt 0 ]; do
     --path=*)
       ARG_PATH="${1#*=}"
       ;;
-    mount|unmount|list|fstrim|defrag)
+    mount|unmount|list|fstrim|defrag|size)
       COMMAND="$1"
       ;;
     *)
@@ -21,6 +22,7 @@ while [ $# -gt 0 ]; do
 		  lxd-btrfs-manager mount [--pool=<name>]
 		  lxd-btrfs-manager unmount [--pool=<name>]
 		  lxd-btrfs-manager list [--pool=<name>]
+		  lxd-btrfs-manager size [--pool=<name>]
 		  lxd-btrfs-manager fstrim [--pool=<name>]
 		  lxd-btrfs-manager defrag [--pool=<name>] [--path=<path>]
 
@@ -47,19 +49,27 @@ case "$COMMAND" in
 	mount)
 		mkdir $TEMP_MOUNT_PATH
 		mount $LOOPFILE_PATH $TEMP_MOUNT_PATH
-		echo "Mounted LXD storage $STORAGE on $TEMP_MOUNT_PATH"
+		echo "Mounted LXD storage $ARG_POOL on $TEMP_MOUNT_PATH"
 	;;
 	unmount)
 		umount $TEMP_MOUNT_PATH
 		rmdir $TEMP_MOUNT_PATH
-		echo "Unmounted LXD storage $STORAGE from $TEMP_MOUNT_PATH"
+		echo "Unmounted LXD storage $ARG_POOL from $TEMP_MOUNT_PATH"
 	;;
 	list)
 		$ARG_SELF mount --pool=$ARG_POOL
 		btrfs subvolume list -t --sort=path $TEMP_MOUNT_PATH
+		df -h $TEMP_MOUNT_PATH
 		$ARG_SELF unmount --pool=$ARG_POOL
 		if [ -n "$IMAGEFILE_PATH" ]; then filesize $IMAGEFILE_PATH; fi
+		lxc storage info default | head -n6 | tail -n2 | sed -e 's/^[[:space:]]*//'
 		btrfs filesystem show $ARG_POOL
+	;;
+	size)
+		$ARG_SELF mount --pool=$ARG_POOL
+		lxc storage info default | head -n6 | tail -n2 | sed -e 's/^[[:space:]]*//'
+		btrfs filesystem show $ARG_POOL
+		$ARG_SELF unmount --pool=$ARG_POOL
 	;;
 	defrag)
 		$ARG_SELF mount --pool=$ARG_POOL
@@ -72,10 +82,13 @@ case "$COMMAND" in
 		echo "Trimming BTRFS pool $ARG_POOL.."
 		$ARG_SELF mount --pool=$ARG_POOL
 		fstrim -v $TEMP_MOUNT_PATH
+		sync $TEMP_MOUNT_PATH
 		$ARG_SELF unmount --pool=$ARG_POOL
 		if [ -n "$IMAGEFILE_PATH" ]; then
+			echo "Waiting for BTRFS filesystem sync-to-disk.."
+			sleep 10
 			echo "Trimming loop image file.."
-			fstrim -v $(dirname $IMAGEFILE_PATH);
+			fstrim -v $(dirname $IMAGEFILE_PATH)
 		fi
 		echo "Done."
 	;;

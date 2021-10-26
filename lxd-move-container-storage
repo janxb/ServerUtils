@@ -1,0 +1,18 @@
+#!/bin/bash
+set -eu
+
+container=$1
+newstorage=$2
+
+newcontainer=$container-$(random-string 10)
+
+echo "moving $container as $newcontainer to storage $newstorage"
+lxc move $container $newcontainer --storage=$2
+
+echo "renaming $newcontainer back to $container"
+lxc move $newcontainer $container
+
+echo "starting $container"
+lxc start $container
+
+echo "done."

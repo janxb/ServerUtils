@@ -1,73 +1,83 @@
-#!/usr/bin/env php
-<?php
+#!/bin/bash
+set -e
 
-function api($apiKey, String $endpoint, $postData = [])
-{
-    $curl = curl_init();
+if [ ! -x "$(command -v jq)" ]; then echo "Required binary 'jq' is missing."; exit 1; fi
+if [ ! -x "$(command -v recode)" ]; then echo "Required binary 'recode' is missing."; exit 1; fi
+if [ ! -x "$(command -v curl)" ]; then echo "Required binary 'curl' is missing."; exit 1; fi
 
-    curl_setopt_array($curl, array(
-        CURLOPT_URL => 'https://api.uptimerobot.com/v2/' . $endpoint,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_ENCODING => '',
-        CURLOPT_MAXREDIRS => 10,
-        CURLOPT_TIMEOUT => 30,
-        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-        CURLOPT_CUSTOMREQUEST => 'POST',
-        CURLOPT_POSTFIELDS => 'api_key=' . $apiKey . '&format=json&' . http_build_query($postData),
-        CURLOPT_HTTPHEADER => array(
-            'cache-control: no-cache',
-            'content-type: application/x-www-form-urlencoded'
-        ),
-    ));
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--key=*)
+			arg_key="${1#*=}"
+			;;
+		--pause)
+			arg_pause=true
+			arg_action="Pausing"
+			arg_action_numeric=0
+			;;
+		--resume)
+			arg_resume=true
+			arg_action="Resuming"
+			arg_action_numeric=1
+			;;
+		--monitor=*)
+			arg_monitor="${1#*=}"
+			;;
+		*)
+cat << EOF
+Uptimerobot monitor status script. List, pause and resume all or specific uptimerobot monitors.
+Parameters:
+  --key=	API key of your uptimerobot account
+  --pause	Pause matching monitors
+  --resume	Resume matching monitors
+  --monitor=	(Optional) ID or name of the selected monitor
+EOF
+exit 1
+;;
+	esac
+	shift
+done
 
-    $response = curl_exec($curl);
-    $err = curl_error($curl);
+if [[ -n $arg_pause && -n $arg_resume ]]; then
+	echo "Pause and resume can't be used together!"
+	exit 1
+fi
 
-    curl_close($curl);
+if [[ -z $arg_key ]]; then
+	echo "Please provide the uptimerobot API key!"
+	exit 1
+fi
 
-    if ($err) {
-        echo 'cURL Error #:' . $err;
-    } else {
-        return json_decode($response);
-    }
-    return null;
+# if monitors argument is numeric, we can directly search by ID
+if [ ! -z "${arg_monitor##*[!0-9]*}" ]
+	then all_monitors=$(curl -s 'https://api.uptimerobot.com/v2/getMonitors' -d "api_key=$arg_key&format=json&monitors=$arg_monitor")
+	else all_monitors=$(curl -s 'https://api.uptimerobot.com/v2/getMonitors' -d "api_key=$arg_key&format=json&search=$arg_monitor")
+fi
+
+# wrapper function for filtering the all_monitors list
+monitors_filter() {
+	echo $(echo "$all_monitors" | jq "$1")
 }
 
-function getMonitorDescription($monitor){
-    return $monitor->friendly_name . ' / ' . $monitor->id;
-}
+monitors_count=$(($(monitors_filter '.monitors | length')-1))
 
-$options = getopt(null, ['pause', 'resume', 'key:', 'monitor:']);
-$statusPause = array_key_exists('pause', $options);
-$statusResume = array_key_exists('resume', $options);
+for monitor_index in $(seq 0 $monitors_count); do
+	monitor_id=$(monitors_filter ".monitors[$monitor_index].id")
+	monitor_name=$(monitors_filter ".monitors[$monitor_index].friendly_name" | recode html..ascii | sed 's/\"//g')
+	if [[ $(monitors_filter ".monitors[$monitor_index].status") -eq 2 ]]
+		then monitor_status="Up  "
+		else monitor_status="Down"
+	fi
 
-$apiKey = isset($options['key']) ? $options['key'] : null;
-$monitorId = isset($options['monitor']) ? $options['monitor'] : null;
+	# list monitors
+	if [ -z $arg_action_numeric ]; then
+		echo "$monitor_id / $monitor_status / $monitor_name"
 
-function cleanMonitorName($name){
-	return strtolower(str_replace('-', ' ', $name));
-}
+	# pause / resume monitors
+	else
+		echo -n "$arg_action monitor $monitor_id / $monitor_name"
+		curl -s 'https://api.uptimerobot.com/v2/editMonitor' -d "api_key=$arg_key&format=json&id=$monitor_id&status=$arg_action_numeric" --output /dev/null
+		echo ' - Done'
+	fi
 
-if (!empty($apiKey)) {
-    foreach (api($apiKey, 'getMonitors')->monitors as $monitor) {
-        if ($statusPause xor $statusResume) {
-	    if ( empty($monitorId) || $monitor->id == $monitorId || strpos(cleanMonitorName($monitor->friendly_name),cleanMonitorName($monitorId))!==false ){
-                api($apiKey, 'editMonitor', ['id' => $monitor->id, 'status' => $statusPause ? 0 : 1]);
-                $stateString = $statusPause ? 'Paused' : 'Resumed';
-                echo $stateString .' monitor: ' . getMonitorDescription($monitor) ."\n";
-            }
-        } else {
-            echo getMonitorDescription($monitor) . "\n";
-        }
-    }
-} else {
-echo <<<EOL
-    Description: Uptimerobot monitor status script. List, pause and resume all or specific uptimerobot monitors.
-    Parameters:
-               --key=      API key of your uptimerobot account
-               --pause     Pause matching monitors
-               --resume    Resume matching monitors
-               --monitor=  ID or name of the selected monitor. If not provided, all monitors are changed
-
-EOL;
-}
+done
