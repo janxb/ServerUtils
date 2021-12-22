@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -d $1 ]; then
-	du -hsx $1/* | sort -rh | head -10
+	du -hsx $1/* 2>/dev/null | sort -rh | head -10
 else
 	echo "Directory not found.."
 	exit 1
