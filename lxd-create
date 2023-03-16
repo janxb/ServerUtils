@@ -2,23 +2,20 @@
 set -e
 
 if [ "$#" -ne 2 ]; then
-    echo "Illegal number of parameters"
+    echo "Illegal number of parameters."
+	echo "Usage: lxd-create IMAGE_NAME CONTAINER_NAME"
+	echo "Example: lxd-create ubuntu:lts c1"
+	echo "Example: lxd-create images:debian/bullseye c1"
     exit 1
 fi
 
 lxc launch $1 $2
 
-echo "Waiting for network"
-sleep 10
-
 echo "Updating package lists"
 lxc exec $2 -- apt-get update &>/dev/null
 
-echo "Installing GIT"
-lxc exec $2 -- apt-get install git -y &>/dev/null
-
-TOOLS="htop iotop iftop net-tools"
-echo "Installing additional tools ($TOOLS)"
+TOOLS="wget nano git htop iotop iftop net-tools unattended-upgrades"
+echo "Installing additional packages ($TOOLS)"
 lxc exec $2 -- apt-get install $TOOLS -y &>/dev/null
 
 SU_PATH="/usr/local/sbin"
@@ -27,5 +24,27 @@ lxc exec $2 -- git clone https://github.com/janxb/ServerUtils.git $SU_PATH &>/de
 
 echo "Upgrading packages"
 lxc exec $2 -- do-package-upgrades -y &>/dev/null
+
+echo "Configuring unattended upgrades"
+TMP_FILENAME="/tmp/"$(random-string)
+printf '
+APT::Periodic::Enable "1";
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "14";
+APT::Periodic::Verbose "0";
+' > $TMP_FILENAME
+lxc file push $TMP_FILENAME $2/etc/apt/apt.conf.d/10periodic &>/dev/null
+lxc file delete $2/etc/apt/apt.conf.d/20auto-upgrades &>/dev/null
+rm $TMP_FILENAME
+TMP_FILENAME="/tmp/"$(random-string)
+printf '
+Unattended-Upgrade::Origins-Pattern {
+"origin=*";
+};
+' > $TMP_FILENAME
+lxc file push $TMP_FILENAME $2/etc/apt/apt.conf.d/50unattended-upgrades &>/dev/null
+rm $TMP_FILENAME
 
 echo Container created: $2
