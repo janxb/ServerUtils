@@ -1,4 +1,4 @@
 #!/bin/bash
 set -eu
 
-rsync -ahz --progress "$1" "$2"
+rsync -ah -W --no-compress --inplace --progress "$1" "$2"
