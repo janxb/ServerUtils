@@ -36,7 +36,7 @@ APT::Periodic::AutocleanInterval "14";
 APT::Periodic::Verbose "0";
 ' > $TMP_FILENAME
 lxc file push $TMP_FILENAME $2/etc/apt/apt.conf.d/10periodic &>/dev/null
-lxc file delete $2/etc/apt/apt.conf.d/20auto-upgrades &>/dev/null
+lxc file delete $2/etc/apt/apt.conf.d/20auto-upgrades &>/dev/null || true
 rm $TMP_FILENAME
 TMP_FILENAME="/tmp/"$(random-string)
 printf '
