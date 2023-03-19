@@ -1,0 +1,11 @@
+#!/bin/bash
+set -eu
+
+echo "deleting file at $1 from all containers"
+
+container_list="$(lxc list -c ns | awk '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+for container in $container_list; do
+	echo "processing container $container.."
+	lxc file delete $container/"$1" || true
+done
+echo "done."
