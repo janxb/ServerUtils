@@ -47,4 +47,13 @@ Unattended-Upgrade::Origins-Pattern {
 lxc file push $TMP_FILENAME "$2/etc/apt/apt.conf.d/50unattended-upgrades" &>/dev/null
 rm $TMP_FILENAME
 
+echo "Configuring remote logging (graylog)"
+TMP_FILENAME="/tmp/"$(random-string)
+printf '
+*.*@graylog.lxd:5140;RSYSLOG_SyslogProtocol23Format
+' > $TMP_FILENAME
+lxc file push $TMP_FILENAME "$2/etc/rsyslog.d/60-graylog.conf" &>/dev/null
+rm $TMP_FILENAME
+lxc exec $2 -- systemctl restart rsyslog &>/dev/null
+
 echo Container created: $2
