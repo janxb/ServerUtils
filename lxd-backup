@@ -80,7 +80,7 @@ function do_export {
 	fi
 
 	log "creating image"
-	lxc publish --compression pigz $CONTAINER/$SNAPSHOT --alias=$IMAGE description="Exported from $CONTAINER at $(date '+%Y-%m-%d %H:%M')" >/dev/null
+	lxc publish $CONTAINER/$SNAPSHOT --alias=$IMAGE description="Exported from $CONTAINER at $(date '+%Y-%m-%d %H:%M')" >/dev/null
 
 	log "exporting image"
 	lxc image export $IMAGE $EXPORTPATH >/dev/null
