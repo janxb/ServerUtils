@@ -35,7 +35,16 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if [ -z "$ARG_POOL" ]; then ARG_POOL=$(lxc storage list | awk 'FNR == 4 {print $2}'); fi
+ROOT_FS_TYPE=$(df -Th / | awk 'FNR == 2 {print $2}')
+
+if [ -z "$ARG_POOL" ]; then
+	if [ $ROOT_FS_TYPE == 'btrfs' ]; then
+		ARG_POOL='/'
+	else
+		ARG_POOL=$(lxc storage list | awk 'FNR == 4 {print $6}');
+	fi
+fi
+
 if [ -z "$ARG_PATH" ]; then ARG_PATH="/"; fi
 
 btrfs filesystem show $ARG_POOL >/dev/null
