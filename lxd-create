@@ -14,7 +14,7 @@ lxc launch $1 $2
 echo "Updating package lists"
 lxc exec $2 -- apt-get update &>/dev/null
 
-TOOLS="wget nano git htop iotop iftop net-tools unattended-upgrades rsyslog"
+TOOLS="wget nano git htop iotop iftop net-tools unattended-upgrades"
 echo "Installing additional packages ($TOOLS)"
 lxc exec $2 -- apt-get install $TOOLS -y &>/dev/null
 
