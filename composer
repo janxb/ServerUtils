@@ -1,0 +1,4 @@
+#!/bin/bash
+set -eu
+
+`ls -r /usr/bin/keyhelp-php* 2>/dev/null | head -1` /usr/bin/composer $*
