@@ -1,0 +1,19 @@
+#!/bin/bash
+set -eu
+
+SERVICE_NAME=$1
+SINCE_SECONDS=$2
+
+NOW=$(date "+%s")
+
+RAW_TIMESTAMP=$(systemctl show ${SERVICE_NAME} --property=ActiveEnterTimestamp | awk -F= '{print $NF}')
+
+PARSED_TIMESTAMP=$(date --date "${RAW_TIMESTAMP}" "+%s")
+
+if [ $((NOW - SINCE_SECONDS)) -lt $PARSED_TIMESTAMP ]; then
+	echo "YES";
+	exit 0;
+else
+	echo "NO";
+	exit 1;
+fi
