@@ -1,50 +1,125 @@
 #!/bin/bash
-set -e
+set -eu
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 3 ]; then
     echo "Illegal number of parameters."
-	echo "Usage: lxd-create IMAGE_NAME CONTAINER_NAME"
-	echo "Example: lxd-create ubuntu:lts c1"
-	echo "Example: lxd-create images:debian/bullseye c1"
+	echo "Usage: lxd-create OS_FAMILY OS_VERSION CONTAINER_NAME"
+	echo "Example: lxd-create ubuntu 24.04 c1"
+	echo "Example: lxd-create fedora 40 c1"
     exit 1
 fi
 
-lxc launch $1 $2
+OS_FAMILY=$1
+OS_VERSION=$2
+CONTAINER_NAME=$3
+
+case $OS_FAMILY in
+  ubuntu)
+    image=ubuntu:$OS_VERSION
+	ostype=debian
+    ;;
+  debian)
+    image=images:debian/$OS_VERSION
+	ostype=debian
+    ;;
+  fedora)
+    image=images:$OS_FAMILY/$OS_VERSION
+	ostype=fedora
+    ;;
+  rockylinux | almalinux | oracle)
+    image=images:$OS_FAMILY/$OS_VERSION
+	ostype=rhel
+    ;;
+  *)
+	echo "Unsupported OS_TYPE. Supported are: ubuntu, debian, fedora, oracle, rockylinux, almalinux"
+    exit 2
+    ;;
+esac
+
+lxc launch $image $CONTAINER_NAME
+
+echo "Waiting for network.."
+sleep 5
 
 echo "Updating package lists"
-lxc exec $2 -- apt-get update &>/dev/null
+case $ostype in
+  debian)
+	lxc exec $CONTAINER_NAME -- apt-get update &>/dev/null
+    ;;
+  fedora)
+	lxc exec $CONTAINER_NAME -- dnf check-update &>/dev/null
+    ;;
+  rhel)
+	lxc exec $CONTAINER_NAME -- dnf install epel-release -y &>/dev/null
+	lxc exec $CONTAINER_NAME -- dnf check-update &>/dev/null
+    ;;
+esac
 
-TOOLS="wget nano git htop iotop iftop net-tools unattended-upgrades"
-echo "Installing additional packages ($TOOLS)"
-lxc exec $2 -- apt-get install $TOOLS -y &>/dev/null
+case $ostype in
+  debian)
+	TOOLS="wget nano git htop iotop iftop net-tools unattended-upgrades"
+	echo "Installing additional packages ($TOOLS)"
+	lxc exec $CONTAINER_NAME -- apt-get install $TOOLS -y &>/dev/null
+    ;;
+  fedora | rhel)
+	TOOLS="wget nano git htop iftop"
+	echo "Installing additional packages ($TOOLS)"
+	lxc exec $CONTAINER_NAME -- dnf install $TOOLS -y &>/dev/null
+    ;;
+esac
 
 SU_PATH="/usr/local/sbin"
 echo "Fetching ServerUtils into $SU_PATH"
-lxc exec $2 -- git clone https://github.com/janxb/ServerUtils.git $SU_PATH &>/dev/null
+lxc exec $CONTAINER_NAME -- git clone https://github.com/janxb/ServerUtils.git $SU_PATH &>/dev/null
 
 echo "Upgrading packages"
-lxc exec $2 -- do-package-upgrades -y &>/dev/null
+case $ostype in
+  debian)
+	lxc exec $CONTAINER_NAME -- do-package-upgrades -y &>/dev/null
+    ;;
+  fedora | rhel)
+	lxc exec $CONTAINER_NAME -- dnf upgrade -y &>/dev/null
+    ;;
+esac
 
 echo "Configuring unattended upgrades"
-TMP_FILENAME="/tmp/"$(random-string)
-printf '
-APT::Periodic::Enable "1";
-APT::Periodic::Update-Package-Lists "1";
-APT::Periodic::Download-Upgradeable-Packages "1";
-APT::Periodic::Unattended-Upgrade "1";
-APT::Periodic::AutocleanInterval "14";
-APT::Periodic::Verbose "0";
-' > $TMP_FILENAME
-lxc file push $TMP_FILENAME "$2/etc/apt/apt.conf.d/10periodic" &>/dev/null
-lxc file delete "$2/etc/apt/apt.conf.d/20auto-upgrades" &>/dev/null || true
-rm $TMP_FILENAME
-TMP_FILENAME="/tmp/"$(random-string)
-printf '
-Unattended-Upgrade::Origins-Pattern {
-"origin=*";
-};
-' > $TMP_FILENAME
-lxc file push $TMP_FILENAME "$2/etc/apt/apt.conf.d/50unattended-upgrades" &>/dev/null
-rm $TMP_FILENAME
+case $ostype in
+  debian)
+	TMP_FILENAME="/tmp/"$(random-string)
+	printf '
+	APT::Periodic::Enable "1";
+	APT::Periodic::Update-Package-Lists "1";
+	APT::Periodic::Download-Upgradeable-Packages "1";
+	APT::Periodic::Unattended-Upgrade "1";
+	APT::Periodic::AutocleanInterval "14";
+	APT::Periodic::Verbose "0";
+	' > $TMP_FILENAME
+	lxc file push $TMP_FILENAME "$CONTAINER_NAME/etc/apt/apt.conf.d/10periodic" &>/dev/null
+	lxc file delete "$CONTAINER_NAME/etc/apt/apt.conf.d/20auto-upgrades" &>/dev/null || true
+	rm $TMP_FILENAME
+	TMP_FILENAME="/tmp/"$(random-string)
+	printf '
+	Unattended-Upgrade::Origins-Pattern {
+	"origin=*";
+	};
+	' > $TMP_FILENAME
+	lxc file push $TMP_FILENAME "$CONTAINER_NAME/etc/apt/apt.conf.d/50unattended-upgrades" &>/dev/null
+	rm $TMP_FILENAME
+    ;;
+  fedora | rhel)
+	lxc exec $CONTAINER_NAME -- dnf install dnf-automatic -y &>/dev/null
+	lxc exec $CONTAINER_NAME -- systemctl enable --now dnf-automatic-install.timer &>/dev/null
+	lxc exec $CONTAINER_NAME -- mkdir /etc/systemd/system/dnf-automatic-install.timer.d &>/dev/null
+	TMP_FILENAME="/tmp/"$(random-string)
+	printf '
+	[Timer]
+	OnBootSec=
+	OnCalendar=03:00
+	' > $TMP_FILENAME
+	lxc file push $TMP_FILENAME "$CONTAINER_NAME/etc/systemd/system/dnf-automatic-install.timer.d/time.conf" #&>/dev/null
+	lxc exec $CONTAINER_NAME -- systemctl daemon-reload &>/dev/null
+    ;;
+esac
 
-echo Container created: $2
+
+echo Container created: $CONTAINER_NAME
