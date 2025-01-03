@@ -18,28 +18,27 @@ fi
 
 case "$COMMAND" in
 	add)
-		iptables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
-		ip6tables -A PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
-		iptables -A PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
-		ip6tables -A PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
-		;;
-        del)
-		iptables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
-		ip6tables -D PREROUTING -t nat -i $EXT_IFACE -p tcp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
-		iptables -D PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV4:$CONTAINER_PORT
-		ip6tables -D PREROUTING -t nat -i $EXT_IFACE -p udp --dport $EXTERNAL_PORT -j DNAT --to $IPV6:$CONTAINER_PORT
+		nft add table ip nat
+		nft "add chain ip nat prerouting { type nat hook prerouting priority -100; }"
+		nft add table ip6 nat
+		nft "add chain ip6 nat prerouting { type nat hook prerouting priority -100; }"
+
+		if [ ! -z $IPV4 ] && [ ! -z $IPV6 ]; then
+			nft "add rule ip nat prerouting iif $EXT_IFACE meta l4proto {tcp, udp} th dport $EXTERNAL_PORT dnat to $IPV4:$CONTAINER_PORT"
+			#nft "add rule ip nat prerouting iif $EXT_IFACE udp dport { $EXTERNAL_PORT } dnat to $IPV4:$CONTAINER_PORT"
+			nft "add rule ip6 nat prerouting iif $EXT_IFACE meta l4proto {tcp, udp} th dport $EXTERNAL_PORT dnat to $IPV6:$CONTAINER_PORT"
+			#nft "add rule ip6 nat prerouting iif $EXT_IFACE udp dport { $EXTERNAL_PORT } dnat to $IPV6:$CONTAINER_PORT"
+		fi;;
+	del)
+		echo "Sorry, but the 'del' command is not implemented for nft forwarding anymore. Please remove all rules and start again."
 		;;
 	delall)
-		for i in $( iptables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do
-			iptables -t nat -D PREROUTING $i;
-		done
-		for i in $( ip6tables -t nat --line-numbers -L PREROUTING | grep ^[0-9] | awk '{ print $1 }' | tac ); do
-			ip6tables -t nat -D PREROUTING $i;
-		done
+		nft delete table ip nat
+		nft delete table ip6 nat
 		;;
 	list)
-		iptables -t nat --line-numbers -L PREROUTING
-		ip6tables -t nat --line-numbers -L PREROUTING
+		nft list ruleset ip | grep dport
+		nft list ruleset ip6 | grep dport
 		;;
 	*)
 		echo "Usage: add/del SOURCEPORT DESTCONTAINER DESTPORT"
