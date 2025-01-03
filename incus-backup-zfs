@@ -30,7 +30,7 @@ case "$COMMAND" in
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS
         ;;
     "import")
-        incus create $CONTAINER --empty
+		incus create $CONTAINER --empty
 		pv < ${TARGET}${TARGET_PREFIX} | zfs receive -F $POOLNAME/containers/$CONTAINER
 		zfs destroy $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS
         ;;
