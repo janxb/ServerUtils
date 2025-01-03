@@ -1,0 +1,40 @@
+#!/bin/bash
+set -eu
+
+echo "WARNING: please only execute this script on an EMPTY server instance!"
+
+incus admin init
+
+ln -fs /usr/share/zoneinfo/Europe/Berlin /etc/localtime
+dpkg-reconfigure -f noninteractive tzdata
+
+POOLNAME=$(incus profile device get default root pool)
+POOLDRIVER=$(incus storage show $POOLNAME | grep driver: | awk '{print $2}')
+
+apt install lz4 -y
+incus config set images.compression_algorithm lz4
+incus config set backups.compression_algorithm lz4
+
+echo br_netfilter >> /etc/modules-load.d/modules.conf
+incus config set core.https_address :8443
+incus storage volume create $POOLNAME backups
+incus storage volume create $POOLNAME images
+incus config set storage.backups_volume $POOLNAME/backups
+incus config set storage.images_volume $POOLNAME/images
+
+incus profile set default snapshots.pattern "{{ creation_date|date:'2006-01-02_15-04-05' }}"
+incus profile set default snapshots.schedule "@daily"
+incus profile set default snapshots.schedule.stopped "true"
+incus profile set default snapshots.expiry "1w"
+
+[ "$POOLDRIVER" != 'zfs' ] && echo "default storage pool is of type '$POOLDRIVER', only ZFS is supported." && exit 1
+
+zfs set compression=lz4 $POOLNAME
+zpool set autoexpand=on $POOLNAME
+zpool set autotrim=on $POOLNAME
+
+lsblk
+
+echo you can add SLOG and L2ARC devices to your zpool by executing:
+echo zpool add $POOLNAME cache /dev/sdXX
+echo zpool add $POOLNAME log /dev/sdXX
