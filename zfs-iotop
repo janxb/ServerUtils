@@ -1,0 +1,4 @@
+#!/bin/bash
+set -eu
+
+watch -n 1 zpool iostat -v -y 1 1
