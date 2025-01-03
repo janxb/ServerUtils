@@ -1,0 +1,37 @@
+#!/bin/bash
+set -eu
+
+command -v yq >/dev/null 2>&1 || { echo "Required binary 'yq' not available." >&2; exit 1; }
+command -v numfmt >/dev/null 2>&1 || { echo "Required binary 'numfmt' not available." >&2; exit 1; }
+command -v incus >/dev/null 2>&1 || { echo "Required binary 'incus' not available." >&2; exit 1; }
+command -v zfs >/dev/null 2>&1 || { echo "Required binary 'zfs' not available." >&2; exit 1; }
+command -v pv >/dev/null 2>&1 || { echo "Required binary 'pv' not available." >&2; exit 1; }
+
+COMMAND=$1
+CONTAINER=$2
+TARGET=$3
+TARGET_PREFIX='.zfs'
+SNAPSHOT_INCUS="sync"
+SNAPSHOT_ZFS="snapshot-sync"
+POOLNAME=$(incus profile device get default root pool)
+POOLDRIVER=$(incus storage show $POOLNAME | grep driver: | awk '{print $2}')
+
+[ "$POOLDRIVER" != 'zfs' ] && echo "default storage pool is of type '$POOLDRIVER', only ZFS is supported." && exit 1
+
+case "$COMMAND" in
+    "export")
+		incus info $CONTAINER >/dev/null
+		SIZE=$(zfs list -H -o name,used | grep default/containers/$CONTAINER | awk '{print $2}' | numfmt --from=iec)
+		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS 2>/dev/null || true
+		incus stop $CONTAINER 2>/dev/null || true
+		incus snapshot create $CONTAINER $SNAPSHOT_INCUS
+		incus start $CONTAINER
+		zfs send --compressed $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}${TARGET_PREFIX}
+		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS
+        ;;
+    "import")
+        incus create $CONTAINER --empty
+		pv < ${TARGET}${TARGET_PREFIX} | zfs receive -F $POOLNAME/containers/$CONTAINER
+		zfs destroy $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS
+        ;;
+esac
