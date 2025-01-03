@@ -3,8 +3,8 @@
 set -e
 
 COMMAND=$1
-EXTERNAL_PORT=$2
-PROTOCOL=$3
+PROTOCOL=$2
+EXTERNAL_PORT=$3
 CONTAINER_NAME=$4
 CONTAINER_PORT=$5
 
@@ -43,5 +43,5 @@ case "$COMMAND" in
 		$BINARY network forward show $LXD_IFACE $EXT_IP6ADDR
 		;;
 	*)
-		echo "Usage: add SOURCEPORT {tcp,udp} DESTCONTAINER [DESTPORT] | list | clear"
+		echo "Usage: add {tcp,udp} SOURCEPORT DESTCONTAINER [DESTPORT] | list | clear"
 esac
