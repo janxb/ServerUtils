@@ -10,7 +10,7 @@ command -v pv >/dev/null 2>&1 || { echo "Required binary 'pv' not available." >&
 COMMAND=$1
 CONTAINER=$2
 TARGET=$3
-TARGET_PREFIX='.zfs'
+TARGET_SUFFIX='.zfs'
 SNAPSHOT_INCUS="sync"
 SNAPSHOT_ZFS="snapshot-sync"
 POOLNAME=$(incus profile device get default root pool)
@@ -26,12 +26,12 @@ case "$COMMAND" in
 		incus stop $CONTAINER 2>/dev/null || true
 		incus snapshot create $CONTAINER $SNAPSHOT_INCUS
 		incus start $CONTAINER
-		zfs send --compressed $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}${TARGET_PREFIX}
+		zfs send --compressed $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}${TARGET_SUFFIX}
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS
         ;;
     "import")
 		incus create $CONTAINER --empty
-		pv < ${TARGET}${TARGET_PREFIX} | zfs receive -F $POOLNAME/containers/$CONTAINER
+		pv < ${TARGET}${TARGET_SUFFIX} | zfs receive -F $POOLNAME/containers/$CONTAINER
 		zfs destroy $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS
         ;;
 esac
