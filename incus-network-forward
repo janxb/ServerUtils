@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+COMMAND=$1
+EXTERNAL_PORT=$2
+PROTOCOL=$3
+CONTAINER_NAME=$4
+CONTAINER_PORT=$5
+
+command -v incus >/dev/null 2>&1 && BINARY=incus || 
+	{
+		command -v lxd >/dev/null 2>&1 && BINARY=lxc || 
+			{ 
+				echo "did not find neither incus nor lxd binary in path." >&2;
+				exit 1;
+			}
+	}
+
+EXT_IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
+EXT_IP6ADDR=$(ip -f inet6 -o addr show $EXT_IFACE | cut -d\  -f 7 | cut -d/ -f 1 | head -n 1)
+EXT_IP4ADDR=$(ip -f inet -o addr show $EXT_IFACE | cut -d\  -f 7 | cut -d/ -f 1 | head -n 1)
+
+LXD_IFACE=$($BINARY profile device get default eth0 network)
+LXD_IPADDR=$(ip -f inet -o addr show $LXD_IFACE|cut -d\  -f 7 | cut -d/ -f 1)
+
+if [ -n "${CONTAINER_NAME}" ]; then
+	IPV4=$(dig +short a $CONTAINER_NAME @$LXD_IPADDR)
+	IPV6=$(dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR)
+fi
+
+case "$COMMAND" in
+	add)
+		$BINARY network forward port add $LXD_IFACE $EXT_IP4ADDR $PROTOCOL $EXTERNAL_PORT $IPV4 $CONTAINER_PORT
+		$BINARY network forward port add $LXD_IFACE $EXT_IP6ADDR $PROTOCOL $EXTERNAL_PORT $IPV6 $CONTAINER_PORT
+		;;
+	clear)
+		$BINARY network forward port remove $LXD_IFACE $EXT_IP4ADDR --force || true
+		$BINARY network forward port remove $LXD_IFACE $EXT_IP6ADDR --force || true
+		;;
+	list)
+		$BINARY network forward show $LXD_IFACE $EXT_IP4ADDR
+		$BINARY network forward show $LXD_IFACE $EXT_IP6ADDR
+		;;
+	*)
+		echo "Usage: add SOURCEPORT {tcp,udp} DESTCONTAINER [DESTPORT] | list | clear"
+esac
