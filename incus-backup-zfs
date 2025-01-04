@@ -1,44 +1,64 @@
 #!/bin/bash
 set -eu
 
-COMMAND=${1:-help}
+function is_available {
+	command -v $1 >/dev/null 2>&1 || { echo "Required binary '$1' not available." >&2; exit 1; }
+}
 
-command -v yq >/dev/null 2>&1 || { echo "Required binary 'yq' not available." >&2; exit 1; }
-command -v numfmt >/dev/null 2>&1 || { echo "Required binary 'numfmt' not available." >&2; exit 1; }
-command -v incus >/dev/null 2>&1 || { echo "Required binary 'incus' not available." >&2; exit 1; }
-command -v zfs >/dev/null 2>&1 || { echo "Required binary 'zfs' not available." >&2; exit 1; }
-command -v pv >/dev/null 2>&1 || { echo "Required binary 'pv' not available." >&2; exit 1; }
+is_available yq
+is_available jq
+is_available numfmt
+is_available incus
+is_available zfs
+is_available pv
+is_available grep
+is_available awk
 
-TARGET_SUFFIX='.zfs'
-SNAPSHOT_INCUS="sync"
-SNAPSHOT_ZFS="snapshot-sync"
+ARGNUM=3
+if [ $# -lt $(($ARGNUM)) ] || [ $# -gt $ARGNUM ]; then
+	COMMAND='help'
+else
+	COMMAND=${1:-help}
+	CONTAINER=$2
+	TARGET=$3
+	HASH=$(echo $CONTAINER | shasum | cut -b 1-30)
+	SNAPSHOT_INCUS="$HASH"
+	SNAPSHOT_ZFS="snapshot-$SNAPSHOT_INCUS"
+fi
+
 POOLNAME=$(incus profile device get default root pool)
 POOLDRIVER=$(incus storage show $POOLNAME | grep driver: | awk '{print $2}')
 
-[ "$POOLDRIVER" != 'zfs' ] && echo "default storage pool is of type '$POOLDRIVER', only ZFS is supported." && exit 1
+[ "$POOLDRIVER" != 'zfs' ] && echo "Error: default storage pool is of type '$POOLDRIVER', only ZFS is supported." && exit 1
 
 case "$COMMAND" in
     "export")
-		CONTAINER=$2
-		TARGET=$3
+		if [ -d ${TARGET} ]; then
+			echo "Error: file '${TARGET}' is a directory."
+			exit 1
+		fi
 		incus info $CONTAINER >/dev/null
+		CONTAINER_STATE=$(incus query /1.0/instances/$CONTAINER | jq .status)
 		SIZE=$(zfs list -H -o name,used | grep default/containers/$CONTAINER | awk '{print $2}' | numfmt --from=iec)
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS 2>/dev/null || true
-		incus stop $CONTAINER 2>/dev/null || true
+		[ $CONTAINER_STATE == '"Running"' ] && incus stop $CONTAINER 2>/dev/null || true
 		incus snapshot create $CONTAINER $SNAPSHOT_INCUS
-		incus start $CONTAINER
-		zfs send --compressed $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}${TARGET_SUFFIX}
+		[ $CONTAINER_STATE == '"Running"' ] && incus start $CONTAINER 2>/dev/null || true
+		zfs send --compressed $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS
         ;;
     "import")
-		TARGET=$2
-		CONTAINER=$3
-		incus create $CONTAINER --empty
-		pv < ${TARGET}${TARGET_SUFFIX} | zfs receive -F $POOLNAME/containers/$CONTAINER
-		zfs destroy $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS
+		if [ ! -f ${TARGET} ]; then
+			echo "Error: file '${TARGET}' does not exist."
+			exit 1
+		fi
+		incus create $CONTAINER --empty >/dev/null
+		pv < ${TARGET} | zfs receive -F $POOLNAME/containers/$CONTAINER
+		zfs destroy $POOLNAME/containers/$CONTAINER@%
         ;;
 	*)
-		echo "Wrong parameters! Usage: incus-backup-zfs [ export CONTAINER TARGET_FILE | import SOURCE_FILE CONTAINER ]"
-		echo "This script only works for containers on ZFS storage pools and exports in native ZFS format to a file with .zfs suffix"
+		echo
+		echo "Wrong parameters! Usage: incus-backup-zfs [ export | import ] CONTAINER FILENAME"
+		echo "This script only works for containers on ZFS storage pools and exports to a native ZFS data file."
 		;;
 esac
