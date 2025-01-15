@@ -1,0 +1,5 @@
+#!/bin/bash
+set -eu
+
+ln -fs /usr/share/zoneinfo/$1 /etc/localtime
+dpkg-reconfigure -f noninteractive tzdata
