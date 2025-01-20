@@ -26,8 +26,9 @@ else
 	SNAPSHOT_ZFS="snapshot-$SNAPSHOT_INCUS"
 fi
 
-POOLNAME=$(incus profile device get default root pool)
-POOLDRIVER=$(incus storage show $POOLNAME | grep driver: | awk '{print $2}')
+STORAGENAME=$(incus profile device get default root pool)
+POOLNAME=$(incus storage show $STORAGENAME | grep zfs.pool_name: | awk '{print $2}')
+POOLDRIVER=$(incus storage show $STORAGENAME | grep driver: | awk '{print $2}')
 
 [ "$POOLDRIVER" != 'zfs' ] && echo "Error: default storage pool is of type '$POOLDRIVER', only ZFS is supported." && exit 1
 
@@ -39,7 +40,7 @@ case "$COMMAND" in
 		fi
 		incus info $CONTAINER >/dev/null
 		CONTAINER_STATE=$(incus query /1.0/instances/$CONTAINER | jq .status)
-		SIZE=$(zfs list -H -o name,used | grep default/containers/$CONTAINER | awk '{print $2}' | numfmt --from=iec)
+		SIZE=$(zfs list -H -o name,used | grep $POOLNAME/containers/$CONTAINER | awk '{print $2}' | numfmt --from=iec)
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS 2>/dev/null || true
 		[ $CONTAINER_STATE == '"Running"' ] && incus stop $CONTAINER 2>/dev/null || true
 		incus snapshot create $CONTAINER $SNAPSHOT_INCUS
