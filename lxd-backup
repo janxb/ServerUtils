@@ -1,6 +1,15 @@
 #!/bin/bash
 set -e
 
+command -v incus >/dev/null 2>&1 && BINARY=incus ||
+	{
+		command -v lxd >/dev/null 2>&1 && BINARY=lxc ||
+			{
+				echo "did not find neither incus nor lxd binary in path." >&2;
+				exit 1;
+			}
+	}
+
 function log {
 	echo "$(date '+%Y-%m-%d %H:%M:%S') | $1"
 }
@@ -22,14 +31,14 @@ function do_import {
 	log "importing template $IMPORTPATH as container $CONTAINER"
 
 	log "importing image file"
-	lxc image delete $IMAGE 2>/dev/null || true
-	lxc image import $IMPORTPATH --alias=$IMAGE >/dev/null
+	$BINARY image delete $IMAGE 2>/dev/null || true
+	$BINARY image import $IMPORTPATH --alias=$IMAGE >/dev/null
 
 	log "creating container"
-	lxc init $IMAGE $CONTAINER >/dev/null || true
+	$BINARY init $IMAGE $CONTAINER >/dev/null || true
 
 	log "cleaning up"
-	lxc image delete $IMAGE 2> /dev/null
+	$BINARY image delete $IMAGE 2> /dev/null
 
 	log "done."
 
@@ -42,7 +51,7 @@ function do_export {
 	  exit 2
 	fi
 
-	if lxc info $1 2>/dev/null | egrep -iqc "status: running"; then
+	if $BINARY info $1 2>/dev/null | egrep -iqc "status: running"; then
 	  ISRUNNING=true
 	else
 	  ISRUNNING=false
@@ -63,31 +72,31 @@ function do_export {
 	log "exporting container $CONTAINER to $EXPORTPATH.tar.gz"
 
 	log "preparing snapshot"
-	lxc delete $CONTAINER/$SNAPSHOT 2>/dev/null || true
-	lxc image delete $IMAGE 2>/dev/null || true
+	$BINARY delete $CONTAINER/$SNAPSHOT 2>/dev/null || true
+	$BINARY image delete $IMAGE 2>/dev/null || true
 
 	if [ "$ISRUNNING" = true ] ; then
 	  log "stopping container"
-	  lxc stop $CONTAINER 2>/dev/null
+	  $BINARY stop $CONTAINER 2>/dev/null
 	fi
 
 	log "creating snapshot"
-	lxc snapshot $CONTAINER $SNAPSHOT >/dev/null
+	$BINARY snapshot $CONTAINER $SNAPSHOT >/dev/null
 
 	if [ "$ISRUNNING" = true ] ; then
 	  log "starting container"
-	  lxc start $CONTAINER
+	  $BINARY start $CONTAINER
 	fi
 
 	log "creating image"
-	lxc publish $CONTAINER/$SNAPSHOT --alias=$IMAGE description="Exported from $CONTAINER at $(date '+%Y-%m-%d %H:%M')" >/dev/null
+	$BINARY publish $CONTAINER/$SNAPSHOT --alias=$IMAGE description="Exported from $CONTAINER at $(date '+%Y-%m-%d %H:%M')" >/dev/null
 
 	log "exporting image"
-	lxc image export $IMAGE $EXPORTPATH >/dev/null
+	$BINARY image export $IMAGE $EXPORTPATH >/dev/null
 
 	log "cleaning up"
-	lxc delete $CONTAINER/$SNAPSHOT
-	lxc image delete $IMAGE
+	$BINARY delete $CONTAINER/$SNAPSHOT
+	$BINARY image delete $IMAGE
 
 	log "done."
 }
@@ -107,9 +116,9 @@ function do_clean {
 	log "Cleaning backup data for container $CONTAINER"
 
 	log "Removing container snapshot.."
-	lxc delete $CONTAINER/$IMAGE 2>/dev/null || true
+	$BINARY delete $CONTAINER/$IMAGE 2>/dev/null || true
 	log "Removing image.."
-	lxc image delete $IMAGE 2>/dev/null || true
+	$BINARY image delete $IMAGE 2>/dev/null || true
 	log "done."
 }
 
