@@ -17,6 +17,8 @@ command -v incus >/dev/null 2>&1 && BINARY=incus ||
 			}
 	}
 
+command -v dig >/dev/null 2>&1 || { echo "Required package 'dnsutils' not available." >&2; exit 1; }
+
 EXT_IFACE=$(ip -o route show to default | awk '{print $5}' | head -n1)
 EXT_IP6ADDR=$(ip -f inet6 -o addr show $EXT_IFACE | cut -d\  -f 7 | cut -d/ -f 1 | head -n 1)
 EXT_IP4ADDR=$(ip -f inet -o addr show $EXT_IFACE | cut -d\  -f 7 | cut -d/ -f 1 | head -n 1)
@@ -28,6 +30,9 @@ if [ -n "${CONTAINER_NAME}" ]; then
 	IPV4=$(dig +short a $CONTAINER_NAME @$LXD_IPADDR)
 	IPV6=$(dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR)
 fi
+
+$BINARY network forward create $LXD_IFACE $EXT_IP4ADDR 2>/dev/null || true
+$BINARY network forward create $LXD_IFACE $EXT_IP6ADDR 2>/dev/null || true
 
 case "$COMMAND" in
 	add)
