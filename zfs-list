@@ -1,4 +1,35 @@
 #!/bin/bash
 set -eu
 
-zfs list -o space,referenced,compressratio
+TYPE=filesystem,volume
+COLUMNS=space,referenced,compressratio
+
+for i in "$@"; do
+  case $i in
+    -v)
+      TYPE+=,snapshot
+      shift
+      ;;
+    -o)
+      COLUMNS+=,origin
+      shift
+      ;;
+    -h|--help)
+      echo "
+zfs-list
+	-o	show origin column
+	-v	include snapshots
+"
+	  exit
+      shift
+      ;;
+    -*|--*)
+      echo "Unknown option $i"
+      exit 1
+      ;;
+    *)
+      ;;
+  esac
+done
+
+zfs list -o $COLUMNS -t $TYPE
