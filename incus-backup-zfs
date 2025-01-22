@@ -40,12 +40,12 @@ case "$COMMAND" in
 		fi
 		incus info $CONTAINER >/dev/null
 		CONTAINER_STATE=$(incus query /1.0/instances/$CONTAINER | jq .status)
-		SIZE=$(zfs list -H -o name,used | grep $POOLNAME/containers/$CONTAINER | awk '{print $2}' | numfmt --from=iec)
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS 2>/dev/null || true
 		[ $CONTAINER_STATE == '"Running"' ] && incus stop $CONTAINER 2>/dev/null || true
-		incus snapshot create $CONTAINER $SNAPSHOT_INCUS
+		incus snapshot create --no-expiry $CONTAINER $SNAPSHOT_INCUS
 		[ $CONTAINER_STATE == '"Running"' ] && incus start $CONTAINER 2>/dev/null || true
-		zfs send --compressed $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}
+		SIZE=$(zfs send -Pnc $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | grep size | awk '{print $2}')
+		zfs send -c $POOLNAME/containers/$CONTAINER@$SNAPSHOT_ZFS | pv -s $SIZE > ${TARGET}
 		incus snapshot delete $CONTAINER $SNAPSHOT_INCUS
         ;;
     "import")
