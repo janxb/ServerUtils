@@ -27,8 +27,13 @@ LXD_IFACE=$($BINARY profile device get default eth0 network)
 LXD_IPADDR=$(ip -f inet -o addr show $LXD_IFACE|cut -d\  -f 7 | cut -d/ -f 1)
 
 if [ -n "${CONTAINER_NAME}" ]; then
-	IPV4=$(dig +short a $CONTAINER_NAME @$LXD_IPADDR)
-	IPV6=$(dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR)
+	IPV4=$(timeout 0.1 dig +short a $CONTAINER_NAME @$LXD_IPADDR || true)
+	IPV6=$(timeout 0.1 dig +short aaaa $CONTAINER_NAME @$LXD_IPADDR || true)
+
+	if [ -z $IPV4 ] || [ -z $IPV6 ]; then
+		echo "could not fetch IP address for container $CONTAINER_NAME"
+		exit 1
+	fi
 fi
 
 $BINARY network forward create $LXD_IFACE $EXT_IP4ADDR 2>/dev/null || true
