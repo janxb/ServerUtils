@@ -21,6 +21,24 @@ else
 	COMMAND=${1:-help}
 	CONTAINER=$2
 	TARGET=$3
+
+	if [ $CONTAINER == '-a' ]; then
+		if [ ! -d ${TARGET} ]; then
+			echo "Error: directory '${TARGET}' does not exist."
+			exit 1
+		fi
+		container_list="$(incus list -c ns | awk '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+		for container in $container_list; do
+			$0 $COMMAND $container $TARGET/$container.zfs
+		done
+		exit 0
+	fi
+
+	if [[ ! "$CONTAINER" =~ ^[a-zA-Z0-9] ]]; then
+		echo "Error: container name needs to start with alphanumeric character."
+		exit 1
+	fi
+
 	HASH=$(echo $CONTAINER | shasum | cut -b 1-30)
 	SNAPSHOT_INCUS="$HASH"
 	SNAPSHOT_ZFS="snapshot-$SNAPSHOT_INCUS"
@@ -59,7 +77,8 @@ case "$COMMAND" in
         ;;
 	*)
 		echo
-		echo "Wrong parameters! Usage: incus-backup-zfs [ export | import ] CONTAINER FILENAME"
+		echo "Wrong parameters! Usage: incus-backup-zfs [ export | import ] [ CONTAINER | -a ] FILENAME"
+		echo "                                                    (-a parameter exports all running containers)"
 		echo "This script only works for containers on ZFS storage pools and exports to a native ZFS data file."
 		;;
 esac
