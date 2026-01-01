@@ -1,3 +1,12 @@
 #!/bin/bash
 
-lxc exec $1 -- script /dev/null -q -c bash
+command -v incus >/dev/null 2>&1 && BINARY=incus ||
+        {
+                command -v lxd >/dev/null 2>&1 && BINARY=lxc ||
+                        {
+                                echo "did not find neither incus nor lxd binary in path." >&2;
+                                exit 1;
+                        }
+        }
+
+$BINARY exec $1 -- script /dev/null -q -c bash
