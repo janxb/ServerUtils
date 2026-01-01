@@ -1,7 +1,16 @@
 #!/usr/bin/env bash
 
+command -v incus >/dev/null 2>&1 && BINARY=incus ||
+        {
+                command -v lxd >/dev/null 2>&1 && BINARY=lxc ||
+                        {
+                                echo "did not find neither incus nor lxd binary in path." >&2;
+                                exit 1;
+                        }
+        }
+
 # Get containers list
-clist="$(lxc list -c ns | awk '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
+clist="$($BINARY list -c ns | awk '!/NAME/{ if ( $4 == "RUNNING" ) print $2}')"
 
 for i in "$@"
 do
@@ -27,6 +36,6 @@ do
    echo "EXCLUDED"
    continue
   else
-   lxc exec $c -- "$@"
+   $BINARY exec $c -- "$@"
  fi
 done
